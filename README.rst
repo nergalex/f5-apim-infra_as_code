@@ -1,0 +1,480 @@
+API Management for Infra as Code
+=======================================================================
+.. contents:: Table of Contents
+
+Introduction
+==================================================
+Use Case
+###############
+- **Passwordless** -- Do not share admin right account to API consumer, use temporary token
+- **Control and Visibility** -- Manage who can consume (Authentication), which API (Authorization) and track consumption (Accounting)
+- **Secure front door** -- Publishing directly infrastructure management API to consumers is also an open door to exploit vulnerability or doing misconfiguration. Because patching management plane of your infra could be a long process, use a WAF, natively API oriented, to protect your infra.
+- **Collaboration** -- Publish live documentation to Application Developper (AppDev) on how to consume your Infra as Code (IaC)
+- **Agility** -- Do not change API when an infrastructure product change, publish agnostic API to your consumer
+
+Benefit
+###############
+- **Secure Infra as Code** -- Protect and manage published API of your Infra as Code (IaC)
+- **Faster App Deployment** -- Accelerate your App deployment by publishing automatically clear and up-to-date API documentation to AppDev
+- **Simple management** -- Security Team updates all components of this front door (WAF, API GW and DevPortal) with one file : `openAPI spec file (swagger) <https://swagger.io/specification/>`_
+
+Architecture
+###############
+Global view
+*********************
+ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo
+
+.. figure:: _figures/NIC_functionnal_view.png
+
+
+Functional view
+*********************
+ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo
+
+.. figure:: _figures/NIC_functionnal_view.png
+
+Functional components in the data path between consumers and infrastructure devices:
+
+- **DNS** -- DNS name resolution to access to published Application and DevPortal
+- **DevPortal** -- Web User Interface that presents to developers how to consume published Applications i.e. published IaC APIs
+- **Consumer** -- orchestration tool (`Gitlab <https://docs.gitlab.com/ee/ci/>`_ , `Ansible Tower <https://www.ansible.com/products/tower>`_ , ...)
+- **IdP / oAuth Authorization server** -- oAuth Identity Provider to manage access policy to allow Users (consumer) to consume Application (published IaC API)
+- **WAF** -- Web Application Firewall to prevent from attack on Application and send metrics/security events to its Controller. Protection features are:
+- **+-- Reduce attack surface**: Publish the strict necessary of API apps using up to date `openAPI spec file (swagger) <https://swagger.io/specification/>`_
+- **+-- Virtual Patching**: block exploitation of vulnerabilities (`CVE <https://cve.mitre.org/>`_) on underlying App's technologies
+- **+-- Weakness in code**: Following awareness of OWASP foundation for `API app <https://owasp.org/www-project-api-security/>`_, raise protection to `prevent from hacking actions <http://veriscommunity.net/enums.html#section-actions>`_
+- **API GW** -- oAuth Resource Server, rate limit, monitor service, route based on URI and send metrics/security events to its Controller.
+- **infrastructure | Virtual Appliance** -- final devices that receive API requests from consumer
+- **infrastructure | Network** -- underlying network and L3/L4 FW
+
+Functional out-of-band components used to manage the solution:
+
+- **Controller** -- Through API or UI, manage configuration, collect metrics/security events and give visibility on managed instances: WAF, API GW, DevPortal
+- **Repository** -- External Source of Truth i.e. store configuration files : WAF policy, openAPI spec file of published Applications
+- **Key/value store** -- In spite of querying regularly components to retrieve information by playbooks, useful information are stored in a Key/value store
+- **Automation tool** -- Deploy configuration on Controller
+
+
+Product
+*********************
+Products used for this demo:
+
+- **DNS** -- `F5 Cloud Services <https://simulator.f5.com/>`_
+- **DevPortal** -- instance managed by `NGINX Controller <https://docs.nginx.com/nginx-controller/services/api-management/manage-dev-portals/>`_
+- **Consumer** -- `Postman <https://www.postman.com/>`_
+- **IdP** -- `Okta <https://www.okta.com/developer/signup>`_
+- **WAF**: `unlimited instances managed by NGINX Controller + add-on Application Security module <https://www.nginx.com/blog/introducing-nginx-controller-app-security-for-delivery>`_
+- **API GW**: `unlimited instances managed by NGINX Controller + add-on API Management module <https://www.nginx.com/resources/datasheets/nginx-controller-api-management/>`_
+- **Repository**: GitHub
+- **Controller** -- `NGINX Controller <https://www.nginx.com/products/nginx-controller/>`_
+- **Key/value store**: `Consul <https://www.consul.io/>`_
+- **Automation tool**: `Ansible Tower <https://www.ansible.com/products/tower>`_
+- **infrastructure | Virtual Appliance** -- `F5 BIG-IP <https://clouddocs.f5.com/>`_
+- **infrastructure | Network** -- `Azure <https://github.com/ansible-collections/azure>`_
+
+Network view
+*********************
+.. figure:: _figures/NIC_network_architecture.png
+
+oAuth view
+*********************
+.. figure:: _figures/NIC_component_role.png
+
+WAF policy structure
+*********************
+A WAF policy includes:
+- ** Base line **: enabled protection. Definition could be stored in an external file.
+- ** API definition **: strict positive policy generated from an external openAPI spec file (swagger). Only compliant request URI, method, JSON key/value specified is allowed.
+- ** Modification **: deviation from the Base line. Contains a list of changes to express exceptions to the intended Base line policy. These exceptions are usually the result of fixing false positive incidents and failures in tests applied to those policies.
+
+.. figure:: _figures/NIC_waf_policy_structure.png
+
+More details `here <https://docs.nginx.com/nginx-app-protect/configuration/#policy-authoring-and-tuning>`_.
+
+Demo
+###############
+A) [SecOps] Deploy Ingress Controller
+*********************
+
+.. raw:: html
+
+    <a href="http://www.youtube.com/watch?v=2QuP4FQ1-EU"><img src="http://img.youtube.com/vi/2QuP4FQ1-EU/0.jpg" width="600" height="400" title="Deploy Ingress Controller" alt="Deploy Ingress Controller"></a>
+
+B) [DevOps] Publish an Application
+*********************
+
+.. raw:: html
+
+    <a href="http://www.youtube.com/watch?v=EN6OWU97ogM"><img src="http://img.youtube.com/vi/EN6OWU97ogM/0.jpg" width="600" height="400" title="Publish an Application" alt="Publish an Application"></a>
+
+C) [DevOps] Update App's Security level
+*********************
+
+.. raw:: html
+
+    <a href="http://www.youtube.com/watch?v=SGUMT9Nc5oY"><img src="http://img.youtube.com/vi/SGUMT9Nc5oY/0.jpg" width="600" height="400" title="Update App Security level" alt="Update App Security level"></a>
+
+
+D) [SecOps] Update WAF policy attached to a security level
+*********************
+
+.. raw:: html
+
+    <a href="http://www.youtube.com/watch?v=9VSrPRACjlc"><img src="http://img.youtube.com/vi/9VSrPRACjlc/0.jpg" width="600" height="400" title="Update WAF policy attached to a security level" alt="Update WAF policy attached to a security level"></a>
+
+E) [SecOps] Fix false positive
+*********************
+
+.. raw:: html
+
+    <a href="http://www.youtube.com/watch?v=dijN4EGLZpQ"><img src="http://img.youtube.com/vi/dijN4EGLZpQ/0.jpg" width="600" height="400" title="Fix false positive" alt="Fix false positive"></a>
+
+F) [DevOps] Secure published API
+*********************
+
+.. raw:: html
+
+    <a href="http://www.youtube.com/watch?v=VQ1-2tWeaso"><img src="http://img.youtube.com/vi/VQ1-2tWeaso/0.jpg" width="600" height="400" title="Secure published API" alt="Secure published API"></a>
+
+Pre-requisites
+==============
+Ansible Tower
+##############
+virtualenv
+***************************
+- Create a virtualenv following `this guide <https://docs.ansible.com/ansible-tower/latest/html/upgrade-migration-guide/virtualenv.html>`_
+- In virtualenv, as a prerequisite for Azure collection, install Azure SDK following `this guide <https://github.com/ansible-collections/azure>`_
+- In virtualenv, as a prerequisite for K8S collection, install ``openshift`` following `this guide <https://github.com/ansible-collections/community.kubernetes>`_
+- In virtualenv, fix an issue during ``openshift`` installation ``google`` package dependency:
+
+.. code:: bash
+
+    $ vi /var/lib/awx/venv/myVirtualEnv/lib/python2.7/site-packages/google/__init__.py
+    $ <copy paste https://raw.githubusercontent.com/googleapis/google-auth-library-python/master/google/__init__.py>
+
+Helm
+***************************
+Install Helm following `this guide <https://helm.sh/docs/intro/install/>`_
+
+.. code:: bash
+
+    $ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+
+Project
+***************************
+- Clone this repository to a private repo. A private repo is needed because a ``kubeconfig`` file will be store in ``playbooks/roles/poc-k8s/files``
+- Create a project following `this guide <https://docs.ansible.com/ansible-tower/latest/html/userguide/projects.html>`_
+
+Credential
+***************************
+- Create a Service Principal on Azure following `this guide <https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app>`_
+- Create a Microsoft Azure Resource Manager following `this guide <https://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html#microsoft-azure-resource-manager>`_
+- Create Credentials ``cred_jumphost`` for Jumphost tasks following `this guide <https://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html#machine>`_
+
+=====================================================   =============================================   =============================================   =============================================   =============================================
+REDENTIAL TYPE                                          USERNAME                                        SSH PRIVATE KEY                                 SIGNED SSH CERTIFICATE                          PRIVILEGE ESCALATION METHOD
+=====================================================   =============================================   =============================================   =============================================   =============================================
+``Machine``                                             ``my_VM_admin_user``                            ``my_VM_admin_user_key``                        ``my_VM_admin_user_CRT``                        ``sudo``
+=====================================================   =============================================   =============================================   =============================================   =============================================
+
+Ansible role structure
+######################
+- Deployment is based on ``workflow template``. Example: ``workflow template`` = ``wf-create_create_edge_security_inbound``
+- ``workflow template`` includes multiple ``job template``. Example: ``job template`` = ``poc-azure_create_hub_edge_security_inbound``
+- ``job template`` have an associated ``playbook``. Example: ``playbook`` = ``playbooks/poc-azure.yaml``
+- ``playbook`` launch a ``play`` in a ``role``. Example: ``role`` = ``poc-azure``
+
+.. code:: yaml
+
+    - hosts: localhost
+      gather_facts: no
+      roles:
+        - role: poc-azure
+
+- ``play`` is an ``extra variable`` named ``activity`` and set in each ``job template``. Example: ``create_hub_edge_security_inbound``
+- The specified ``play`` (or ``activity``) is launched by the ``main.yaml`` task located in the role ``tasks/main.yaml``
+
+.. code:: yaml
+
+    - name: Run specified activity
+      include_tasks: "{{ activity }}.yaml"
+      when: activity is defined
+
+- The specified ``play`` contains ``tasks`` to execute. Example: play=``create_hub_edge_security_inbound.yaml``
+
+0) [DevOps] Deploy AKS infrastructure
+==================================================
+Create and launch a workflow template ``wf-aks-create-infra`` that includes those Job templates in this order:
+
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                    objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_create-spoke-aks``                                  Create Ressource Group and vNet                     ``playbooks/poc-azure.yaml``                    ``create-spoke-aks``                                                                                                                            ``my_azure_credential``
+``poc-aks_create-registry``                                     Create ACR                                          ``playbooks/poc-aks.yaml``                      ``create-registry``                                                                                                                             ``my_azure_credential``
+``poc-aks_create-cluster``                                      Create AKS                                          ``playbooks/poc-aks.yaml``                      ``create-cluster``                                                                                                                              ``my_azure_credential``
+``poc-azure_create-vm-jumphost``                                Create Jumphost                                     ``playbooks/poc-azure.yaml``                    ``create-vm-jumphost``                                                                                                                          ``my_azure_credential``
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================   ================================================================================================================================================================================================================
+Extra variable                                  Description                                     Example
+==============================================  =============================================   ================================================================================================================================================================================================================
+``extra_platform_name``                         name used for resource group, vNet...           ``aksdistrict``
+``extra_location``                              Azure region                                    ``eastus2``
+``extra_platform_tags``                         Object tags                                     ``environment=DMO project=CloudBuilderf5``
+``extra_hub_name``                              used to create vNet peering with a HUB          ``HubInbound``
+``extra_vnet_address_prefixes``                 vNet CIDR                                       ``10.13.0.0/16``
+``extra_management_subnet_address_prefix``      Management subnet that hosts juphost            ``10.13.0.0/24``
+``extra_zone_subnet_address_prefix``            K8S Nodes and PODs subnet ; Azure CNI used      ``10.13.1.0/24``
+``extra_zone_name``                             K8S Nodes and PODs subnet ; Azure CNI used      ``cni-nodesandpods``
+``extra_service_cidr``                          K8S internal service subnet                     ``10.200.0.0/24``
+``extra_dns_service_ip``                        K8S internal DNS service subnet                 ``10.200.0.10``
+``extra_k8s_version``                           K8S version                                     ``1.19.0``
+``extra_admin_username``                        K8S admin user of jumphost                      ``PawnedAdmin``
+``extra_admin_ssh_crt``                         K8S public key of admin user                    ``ssh-rsa ...``
+``extra_app_vm_size``                           K8S VMSS / node VM size                         ``Standard_DS1_v2``
+``extra_sp_client_id``                          Service Principal / client ID                   ``<UUID>>``
+``extra_sp_client_secret``                      Service Principal / client Secret               ``...``
+``extra_jumphost``                              properties of jumphost                          dict, see below
+==============================================  =============================================   ================================================================================================================================================================================================================
+
+.. code:: yaml
+
+    extra_jumphost:
+      name: jumphost
+      vm_size: Standard_DS1_v2
+      private_ip: 10.13.0.10
+      acl_src_ips:
+        - '10.0.0.0/8'
+      ssh_crt: "-----BEGIN CERTIFICATE-----...-----END CERTIFICATE-----"
+
+A) [SecOps] Deploy Ingress Controller
+==================================================
+Pre-requisites
+###############################
+NGINX licence
+***************************
+Download your NGINX+ licence files ``nginx-repo.crt`` and ``nginx-repo.key`` to your private repository ``/playbooks/roles/poc-k8s/files/``
+
+AKS - kubeconfig
+***************************
+- Connect to Azure console
+
+.. code:: bash
+
+    $ az aks get-credentials --resource-group rg-<platform_name> --name CloudBuilder
+
+- Download your kubeconfig file ``~/.kube/config`` to your private repository ``/playbooks/roles/poc-k8s/files/config.yaml``
+
+ACR - token
+***************************
+- Connect to Azure console
+
+.. code:: bash
+
+    $ az acr login --name cloudbuilder.azurecr.io --expose-token
+
+- Get a repository ``accessToken`` to be authorized to push NGINX Controller image to ACR
+
+Workflow
+###############################
+Create and launch a workflow template ``wf-k8s-create-ingress-controller`` that includes those Job templates in this order:
+
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                    objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-aks_get-registry_info``                                   Get login_server info                               ``playbooks/poc-aks.yaml``                      ``get-registry_info``                                                                                                                           ``my_azure_credential``
+``poc-azure_get-vm-jumphost``                                   Get FQDN jumphost info                              ``playbooks/poc-azure.yaml``                    ``get-vm-jumphost``                                                                                                                             ``my_azure_credential``
+``poc-k8s-create_nginx_ic_image``                               Build and push NGINX IC + App Protect               ``playbooks/poc-k8s_jumphost.yaml``             ``create_nginx_ic_image``                       localhost                                                                                       ``cred_jumphost``
+``poc-k8s-deploy_nginx_ic``                                     Create or update Ingress container instances        ``playbooks/poc-k8s.yaml``                      ``deploy_nginx_ic``                             localhost
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================   ================================================================================================================================================================================================================
+Extra variable                                  Description                                     Example
+==============================================  =============================================   ================================================================================================================================================================================================================
+``extra_platform_name``                         name used for resource group, vNet...           ``aksdistrict``
+``extra_nginx_ic_version``                      NGINX Ingress Controller version                ``1.9.0``
+``extra_ilb_ingress_ip``                        Azure ILB VIP for Internal Ingress              ``eastus2``
+``extra_jumphost``                              properties of jumphost                          dict, see below
+``extra_acr_token``                             ACR token                                       survey entry, text type
+``extra_wildcard_tls_crt``                      Default wildcard certificate                    survey entry, textarea type
+``extra_wildcard_tls_key``                      Default wildcard private key                    survey entry, textarea type
+==============================================  =============================================   ================================================================================================================================================================================================================
+
+.. code:: yaml
+
+    extra_jumphost:
+      name: jumphost
+
+B) [DevOps] Publish an Application
+==================================================
+Pre-requisites
+###############################
+ACR - token
+***************************
+- Connect to Azure console
+
+.. code:: bash
+
+    $ az acr login --name cloudbuilder.azurecr.io --expose-token
+
+- Get a repository ``accessToken`` to be authorized to push NGINX Controller image to ACR
+
+Workflow
+###############################
+Create and launch a workflow template ``wf-k8s-publish-app`` that includes those Job templates in this order:
+
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                    objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-aks_get-registry_info``                                   Get login_server info                               ``playbooks/poc-aks.yaml``                      ``get-registry_info``                                                                                                                           ``my_azure_credential``
+``poc-azure_get-vm-jumphost``                                   Get FQDN jumphost info                              ``playbooks/poc-azure.yaml``                    ``get-vm-jumphost``                                                                                                                             ``my_azure_credential``
+``poc-k8s-create_app_image``                                    Build and push micro-services images                ``playbooks/poc-k8s_jumphost.yaml``             ``create_app_image``                            localhost                                                                                       ``cred_jumphost``
+``poc-k8s-deploy_app``                                          Deploy App, Services and Ingress                    ``playbooks/poc-k8s.yaml``                      ``deploy_app``                                  localhost
+``poc-k8s-deploy_gslb``                                         Deploy GSLB                                         ``playbooks/poc-k8s.yaml``                      ``deploy_gslb``                                 localhost
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================   ================================================================================================================================================================================================================
+Extra variable                                  Description                                     Example
+==============================================  =============================================   ================================================================================================================================================================================================================
+``extra_platform_name``                         name used for resource group, vNet...           ``aksdistrict``
+``extra_elk``                                   Security log collector                          ``10.13.0.10``
+``extra_app``                                   App properties                                  dict, see below
+``extra_cs``                                    F5 Cloud Services credentials                   dict, see below
+``extra_jumphost``                              properties of jumphost                          dict, see below
+``extra_acr_token``                             ACR token                                       survey, text type
+``extra_app_swagger_url``                       swagger file repo URI                           survey, text type; 'none' == no API Security
+``extra_waf_policy_level``                      Security level                                  survey, multiple choice type: low, medium, high
+``extra_app_tls_crt``                           App SSL certificate                             survey, textarea type
+``extra_app_tls_key``                           App SSL private key                             survey, textarea type
+==============================================  =============================================   ================================================================================================================================================================================================================
+
+.. code:: yaml
+
+    extra_app:
+      name: arcadia
+      domain: f5app.dev
+      gslb_location:
+        - eu
+      components:
+        - name: main
+          location: /
+          source_image: 'https://gitlab.com/arcadia-application/main-app.git'
+        - name: app2
+          location: /api
+          source_image: 'https://gitlab.com/arcadia-application/app2.git'
+        - name: app3
+          location: /app3
+          source_image: 'https://gitlab.com/arcadia-application/app3.git'
+        - name: backend
+          location: /files
+          source_image: 'https://gitlab.com/arcadia-application/back-end.git'
+
+.. code:: yaml
+
+    extra_cs:
+      username: name@acme.com
+      password: ...
+      hostname: api.cloudservices.f5.com
+      api_version: v1
+
+.. code:: yaml
+
+    extra_jumphost:
+      name: jumphost
+
+C) [DevOps] Update App's Security level
+==================================================
+Create and launch a workflow template ``wf-k8s-update_app_security`` that includes those Job templates in this order:
+
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                    objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``Confirm Security level?``                                     Request approval from SecOps                        ``playbooks/poc-k8s.yaml``                      ``deploy_app``                                  localhost
+``poc-k8s-update_security``                                     Update SSL Certificate and WAF policy level         ``playbooks/poc-k8s.yaml``                      ``update_security``                                  localhost
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================   ================================================================================================================================================================================================================
+Extra variable                                  Description                                     Example
+==============================================  =============================================   ================================================================================================================================================================================================================
+``extra_app``                                   App properties                                  dict, see below
+``extra_app_swagger_url``                       swagger file repo URI                           survey, text type; 'none' == no API Security
+``extra_waf_policy_level``                      Security level                                  survey, multiple choice type: low, medium, high
+==============================================  =============================================   ================================================================================================================================================================================================================
+
+.. code:: yaml
+
+    extra_app:
+      name: arcadia
+      domain: f5app.dev
+
+D) [SecOps] Update WAF policy attached to a security level
+==================================================
+Raise webhook after a ``pull request`` is done on WAF policies repository and launch automatically step (B).
+
+Workflow
+###############################
+Create and launch a workflow template ``wf-k8s-fetch-waf-policies`` that includes those Job templates in this order:
+
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                    objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-k8s-reload_ingress``                                      Reload NGINX Ingress Controller                     ``playbooks/poc-k8s.yaml``                      ``deploy_app``                                  localhost
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+Webhook
+***************************
+- Clone `WAF policies repository <https://github.com/nergalex/f5-nap-policies>`_  to a new repo
+- Create a Webhook following `this guide <https://docs.ansible.com/ansible-tower/latest/html/userguide/webhooks.html>`_
+
+E) [SecOps] Fix false positive
+==================================================
+Raise webhook after a ``pull request`` is done on WAF policies repository, that's launched automatically step (D).
+
+F) [DevOps] Secure published API
+==================================================
+Execute step (C) setting ``extra_app_swagger_url`` value with ``https://raw.githubusercontent.com/nergalex/f5-nap-policies/master/policy/open-api-files/arcadia.f5app.dev.yaml``
+
+G) [SecOps] Update WAF signatures
+==================================================
+Execute step (A). In real life, when a notification of update is received from `F5 mailing list <https://interact.f5.com/F5-Preference-Center.html>`_
+
+Troubleshoot
+==================================================
+Get External Ingress Controller PODs:
+
+:kbd:`kubectl describe pod --namespace external-ingress-controller`
+
+View Ingress Controller status (Cache, Zones, Upstream servers) from Jumphost:
+
+:kbd:`http://Pod_IP:8080/dashboard.html`
+
+Get error logs from an External Ingress Controller POD:
+
+:kbd:`kubectl logs --namespace external-ingress-controller POD_name`
+
+Launch a shell on an External Ingress Controller POD:
+
+:kbd:`kubectl exec --namespace external-ingress-controller -it POD_name sh`
+
+View WAF policies for App 'arcadia':
+
+:kbd:`kubectl describe --namespace external-ingress-controller --selector 'app==arcadia' APPolicy`
+
+View App's Service:
+
+:kbd:`kubectl get svc --namespace arcadia -owide`
+
+View App's Ingress:
+
+:kbd:`kubectl get ingress --namespace arcadia -owide`
+
+Reference
+==================================================
+- `AWS NGINX eXperience <http://aws.nginx-experience.com>`_
+- `F5 attack signature info <https://clouddocs.f5.com/cloud-services/latest/f5-cloud-services-Essential.App.Protect-Details.html#attack-signatures>`_
+- `F5 mailing list <https://interact.f5.com/F5-Preference-Center.html>`_
+- `NGINX Ingress Controller - HELM <https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-helm/#configuration>`_
+- `NGINX Ingress Controller - snippet <https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-snippets/>`_
+- `NGINX Ingress Controller - App Protect annotation <https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect>`_
+- `NGINX Ingress Controller - Minions <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/mergeable-ingress-types>`_
+- `WAF policies repository <https://github.com/nergalex/f5-nap-policies>`_
