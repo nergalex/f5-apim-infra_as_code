@@ -103,21 +103,21 @@ More details `here <https://docs.nginx.com/nginx-app-protect/configuration/#poli
 
 Demo
 ###############
-A) [SecOps] Deploy Ingress Controller
+A) ToDo
 *********************
 
 .. raw:: html
 
     <a href="http://www.youtube.com/watch?v=2QuP4FQ1-EU"><img src="http://img.youtube.com/vi/2QuP4FQ1-EU/0.jpg" width="600" height="400" title="Deploy Ingress Controller" alt="Deploy Ingress Controller"></a>
 
-B) [DevOps] Publish an Application
+B) ToDo
 *********************
 
 .. raw:: html
 
     <a href="http://www.youtube.com/watch?v=EN6OWU97ogM"><img src="http://img.youtube.com/vi/EN6OWU97ogM/0.jpg" width="600" height="400" title="Publish an Application" alt="Publish an Application"></a>
 
-C) [DevOps] Update App's Security level
+C) ToDo
 *********************
 
 .. raw:: html
@@ -125,21 +125,21 @@ C) [DevOps] Update App's Security level
     <a href="http://www.youtube.com/watch?v=SGUMT9Nc5oY"><img src="http://img.youtube.com/vi/SGUMT9Nc5oY/0.jpg" width="600" height="400" title="Update App Security level" alt="Update App Security level"></a>
 
 
-D) [SecOps] Update WAF policy attached to a security level
+D) ToDo
 *********************
 
 .. raw:: html
 
     <a href="http://www.youtube.com/watch?v=9VSrPRACjlc"><img src="http://img.youtube.com/vi/9VSrPRACjlc/0.jpg" width="600" height="400" title="Update WAF policy attached to a security level" alt="Update WAF policy attached to a security level"></a>
 
-E) [SecOps] Fix false positive
+E) ToDo
 *********************
 
 .. raw:: html
 
     <a href="http://www.youtube.com/watch?v=dijN4EGLZpQ"><img src="http://img.youtube.com/vi/dijN4EGLZpQ/0.jpg" width="600" height="400" title="Fix false positive" alt="Fix false positive"></a>
 
-F) [DevOps] Secure published API
+F) ToDo
 *********************
 
 .. raw:: html
