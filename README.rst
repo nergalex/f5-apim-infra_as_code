@@ -8,8 +8,8 @@ Use Case
 ###############
 - **Passwordless** -- Do not share admin right account to API consumer, use temporary token
 - **Control and Visibility** -- Manage who can consume (Authentication), which API (Authorization) and track consumption (Accounting)
-- **Secure front door** -- Publishing directly infrastructure management API to consumers is also an open door to exploit vulnerability or doing misconfiguration. Because patching management plane of your infra could be a long process, use a WAF, natively API oriented, to protect your infra.
-- **Collaboration** -- Publish live documentation to Application Developper (AppDev) on how to consume your Infra as Code (IaC)
+- **Secured front door** -- Publishing directly infrastructure management API to consumers is also an open door to exploit vulnerability or doing misconfiguration. Because patching infra devices could be a long process, use a WAF natively API oriented to protect control-plane access.
+- **Collaboration** -- Publish live documentation to Application Developper (AppDev) on how to consume Infra as Code (IaC)
 - **Agility** -- Do not change API when an infrastructure product change, publish agnostic API to your consumer
 
 Benefit
@@ -22,14 +22,19 @@ Architecture
 ###############
 Global view
 *********************
-ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo
+Infrastructure's management API can be published directly through a secured API GW, as described below:
 
-.. figure:: _figures/NIC_functionnal_view.png
+.. figure:: _figures/Architecture_global_direct.png
 
+Some Infra as Code function could be complex to do in one call and this complexity could not be in charge of the consumer.
+In this case, complexity is hidden and process by a playbook published through an Automation layer.
+This use case permits also to publish an Agnostic API workflow dissociated from infrastructure editors.
+Regarding the data path, consumers still make API call to the secured API GW and this one now routes this API request to an automation layer.
+
+.. figure:: _figures/Architecture_global_agnostic.png
 
 Functional view
 *********************
-ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo ToDo
 
 .. figure:: _figures/NIC_functionnal_view.png
 
