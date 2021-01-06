@@ -36,7 +36,7 @@ Regarding the data path, consumers still make API call to the secured API GW and
 Functional view
 *********************
 
-.. figure:: _figures/NIC_functionnal_view.png
+.. figure:: _figures/Architecture_functionnal_view.png
 
 Functional components in the data path between consumers and infrastructure devices:
 
