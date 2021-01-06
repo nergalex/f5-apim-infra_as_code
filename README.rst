@@ -97,7 +97,7 @@ A WAF policy includes:
 - ** API definition **: strict positive policy generated from an external openAPI spec file (swagger). Only compliant request URI, method, JSON key/value specified is allowed.
 - ** Modification **: deviation from the Base line. Contains a list of changes to express exceptions to the intended Base line policy. These exceptions are usually the result of fixing false positive incidents and failures in tests applied to those policies.
 
-.. figure:: _figures/NIC_waf_policy_structure.png
+.. figure:: _figures/waf_policy_structure.png
 
 More details `here <https://docs.nginx.com/nginx-app-protect/configuration/#policy-authoring-and-tuning>`_.
 
