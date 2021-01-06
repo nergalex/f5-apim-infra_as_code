@@ -65,11 +65,11 @@ Product
 Products used for this demo:
 
 - **DNS** -- `F5 Cloud Services <https://simulator.f5.com/>`_
-- **DevPortal** -- instance managed by `NGINX Controller <https://docs.nginx.com/nginx-controller/services/api-management/manage-dev-portals/>`_
+- **DevPortal** -- unlimited instances managed by `NGINX Controller <https://docs.nginx.com/nginx-controller/services/api-management/manage-dev-portals/>`_
 - **Consumer** -- `Postman <https://www.postman.com/>`_
 - **IdP** -- `Okta <https://www.okta.com/developer/signup>`_
-- **WAF**: `unlimited instances managed by NGINX Controller + add-on Application Security module <https://www.nginx.com/blog/introducing-nginx-controller-app-security-for-delivery>`_
-- **API GW**: `unlimited instances managed by NGINX Controller + add-on API Management module <https://www.nginx.com/resources/datasheets/nginx-controller-api-management/>`_
+- **WAF**: unlimited instances managed by `NGINX Controller + add-on Application Security module <https://www.nginx.com/blog/introducing-nginx-controller-app-security-for-delivery>`_
+- **API GW**: unlimited instances managed by `NGINX Controller + add-on API Management module <https://www.nginx.com/resources/datasheets/nginx-controller-api-management/>`_
 - **Repository**: GitHub
 - **Controller** -- `NGINX Controller <https://www.nginx.com/products/nginx-controller/>`_
 - **Key/value store**: `Consul <https://www.consul.io/>`_
@@ -79,11 +79,16 @@ Products used for this demo:
 
 Network view
 *********************
-.. figure:: _figures/NIC_network_architecture.png
+The diagram below present the data flow through network components.
+
+.. figure:: _figures/Architecture_network.png
 
 oAuth view
 *********************
-.. figure:: _figures/NIC_component_role.png
+Client Credentials Grant is used in this demo because the identity of the user is not known and consumer (client) is in confidence, so client_secret can be stored client side.
+Other grant type work as well, only an access token need to be present in Bearer header.
+
+.. figure:: _figures/Architecture_oauth.png
 
 WAF policy structure
 *********************
