@@ -247,10 +247,15 @@ Extra variable                                  Description                     
 
 Troubleshoot
 ==================================================
-Get External Ingress Controller PODs:
+Test oAuth configuration:
 
-:kbd:`kubectl describe pod --namespace external-ingress-controller`
+:kbd: Okta >> API >> Authorization servers >> MyServer >> Token preview
+
+:kbd: `oidcdebugger <https://oidcdebugger.com/>`_
+
+
 
 Reference
 ==================================================
+- `oAuth OpenID Connect test tool <https://oidcdebugger.com/>`_
 - `WAF policies repository <https://github.com/nergalex/f5-nap-policies>`_
