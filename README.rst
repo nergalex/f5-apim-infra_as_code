@@ -103,7 +103,7 @@ More details `here <https://docs.nginx.com/nginx-app-protect/configuration/#poli
 
 Demo
 ###############
-A) ToDo
+A) Create Identity Provider
 *********************
 
 .. raw:: html
@@ -148,6 +148,16 @@ F) ToDo
 
 Pre-requisites
 ==============
+Okta
+##############
+- Create an dev account `here <https://developer.okta.com/signup/>`_
+- Keep the created Okta domain, it will be used later in deployment workflow as an ``extra variable`` named ``organization``
+- Create a token for automation tool that will deploy the solution
+
+.. figure:: _figures/okta_token.png
+
+- Keep the created API key, it will be used later in deployment workflow as an ``extra variable`` named ``api_key``
+
 Ansible Tower
 ##############
 virtualenv
@@ -155,31 +165,12 @@ virtualenv
 - Create a virtualenv following `this guide <https://docs.ansible.com/ansible-tower/latest/html/upgrade-migration-guide/virtualenv.html>`_
 - In virtualenv, as a prerequisite for Azure collection, install Azure SDK following `this guide <https://github.com/ansible-collections/azure>`_
 - In virtualenv, as a prerequisite for K8S collection, install ``openshift`` following `this guide <https://github.com/ansible-collections/community.kubernetes>`_
-- In virtualenv, fix an issue during ``openshift`` installation ``google`` package dependency:
-
-.. code:: bash
-
-    $ vi /var/lib/awx/venv/myVirtualEnv/lib/python2.7/site-packages/google/__init__.py
-    $ <copy paste https://raw.githubusercontent.com/googleapis/google-auth-library-python/master/google/__init__.py>
-
-Helm
-***************************
-Install Helm following `this guide <https://helm.sh/docs/intro/install/>`_
-
-.. code:: bash
-
-    $ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-
-Project
-***************************
-- Clone this repository to a private repo. A private repo is needed because a ``kubeconfig`` file will be store in ``playbooks/roles/poc-k8s/files``
-- Create a project following `this guide <https://docs.ansible.com/ansible-tower/latest/html/userguide/projects.html>`_
 
 Credential
 ***************************
 - Create a Service Principal on Azure following `this guide <https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app>`_
 - Create a Microsoft Azure Resource Manager following `this guide <https://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html#microsoft-azure-resource-manager>`_
-- Create Credentials ``cred_jumphost`` for Jumphost tasks following `this guide <https://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html#machine>`_
+- Create Credentials ``cred_NGINX`` to manage access to NGINX instances following `this guide <https://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html#machine>`_
 
 =====================================================   =============================================   =============================================   =============================================   =============================================
 REDENTIAL TYPE                                          USERNAME                                        SSH PRIVATE KEY                                 SIGNED SSH CERTIFICATE                          PRIVILEGE ESCALATION METHOD
@@ -212,50 +203,76 @@ Ansible role structure
 
 - The specified ``play`` contains ``tasks`` to execute. Example: play=``create_hub_edge_security_inbound.yaml``
 
-0) [DevOps] Deploy AKS infrastructure
+1) Create Identity Provider
 ==================================================
-Create and launch a workflow template ``wf-aks-create-infra`` that includes those Job templates in this order:
+Create and launch a workflow template ``wf-okta-create_IdP`` that includes those Job templates in this order:
 
 =============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 Job template                                                    objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
 =============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
-``poc-azure_create-spoke-aks``                                  Create Ressource Group and vNet                     ``playbooks/poc-azure.yaml``                    ``create-spoke-aks``                                                                                                                            ``my_azure_credential``
-``poc-aks_create-registry``                                     Create ACR                                          ``playbooks/poc-aks.yaml``                      ``create-registry``                                                                                                                             ``my_azure_credential``
-``poc-aks_create-cluster``                                      Create AKS                                          ``playbooks/poc-aks.yaml``                      ``create-cluster``                                                                                                                              ``my_azure_credential``
-``poc-azure_create-vm-jumphost``                                Create Jumphost                                     ``playbooks/poc-azure.yaml``                    ``create-vm-jumphost``                                                                                                                          ``my_azure_credential``
+``poc-okta-create_group``                                       Create a user group                                 ``playbooks/poc-okta.yaml``                    ``create_group``                                 localhost                                       localhost
+``poc-okta-create_user``                                        Create a user                                       ``playbooks/poc-okta.yaml``                    ``create_user``                                  localhost                                       localhost
+``poc-okta-create_app``                                         Create an application for each infra product        ``playbooks/poc-okta.yaml``                    ``create_app``                                   localhost                                       localhost
+``poc-okta-create_auth_server``                                 Create an authorization server                      ``playbooks/poc-okta.yaml``                    ``create_auth_server``                           localhost                                       localhost
+``poc-consul_agnostic_api-register_idp_info``                   Save info in Key/Value store                        ``playbooks/poc-consul.yaml``                  ``register_idp_info``                            localhost                                       localhost
 =============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 
 ==============================================  =============================================   ================================================================================================================================================================================================================
 Extra variable                                  Description                                     Example
 ==============================================  =============================================   ================================================================================================================================================================================================================
-``extra_platform_name``                         name used for resource group, vNet...           ``aksdistrict``
-``extra_location``                              Azure region                                    ``eastus2``
-``extra_platform_tags``                         Object tags                                     ``environment=DMO project=CloudBuilderf5``
-``extra_hub_name``                              used to create vNet peering with a HUB          ``HubInbound``
-``extra_vnet_address_prefixes``                 vNet CIDR                                       ``10.13.0.0/16``
-``extra_management_subnet_address_prefix``      Management subnet that hosts juphost            ``10.13.0.0/24``
-``extra_zone_subnet_address_prefix``            K8S Nodes and PODs subnet ; Azure CNI used      ``10.13.1.0/24``
-``extra_zone_name``                             K8S Nodes and PODs subnet ; Azure CNI used      ``cni-nodesandpods``
-``extra_service_cidr``                          K8S internal service subnet                     ``10.200.0.0/24``
-``extra_dns_service_ip``                        K8S internal DNS service subnet                 ``10.200.0.10``
-``extra_k8s_version``                           K8S version                                     ``1.19.0``
-``extra_admin_username``                        K8S admin user of jumphost                      ``PawnedAdmin``
-``extra_admin_ssh_crt``                         K8S public key of admin user                    ``ssh-rsa ...``
-``extra_app_vm_size``                           K8S VMSS / node VM size                         ``Standard_DS1_v2``
-``extra_sp_client_id``                          Service Principal / client ID                   ``<UUID>>``
-``extra_sp_client_secret``                      Service Principal / client Secret               ``...``
-``extra_jumphost``                              properties of jumphost                          dict, see below
+``extra_okta``                                  dict with properties regarding Okta
+``extra_okta.organization``                     domain (see § Pre-requisites)                   ``dev-431905``
+``extra_okta.api_key``                          API key (see § Pre-requisites)
+``extra_okta.group_name``                       user group                                      ``iac_api_consumers``
+``extra_okta.user``                             dict with user properties
+``extra_okta.user.name``                        user name                                       ``orchestrator``
+``extra_okta.user.login``                       user login                                      ``orchestrator@acme.com``
+``extra_okta.user.password``                    user password                                   ``pwn3dPassw0rd!``
+``extra_okta.app``                              dict with app properties
+``extra_okta.app.name``                         infra product. Example: F5, PAN...              ``f5-bigip-api.f5app.dev``
+``extra_okta.auth_server``                      dict with authorization server properties
+``extra_okta.auth_server.name``                 server name                                     ``agnostic-api``
+``extra_okta.auth_server.audience``             short name that specifies auth server           ``agnostic``
+``extra_okta.auth_server.scopes``               list of allowed scopes                          ``['read:f5_bigip', ...]``
+``extra_okta.auth_server.claims``               list of claims
+``extra_okta.auth_server.claims.X.name``        authorized access value to an infra perimeter   ``f5_bigip``
+``extra_okta.auth_server.claims.X.scopes``      list of scopes authorized to have this claim    ``['read:f5_bigip', ...]``
+``extra_consul``                                dict with properties regarding Consul
+``extra_consul.agent_scheme``                   scheme to access consul server                  ``http``
+``extra_consul.agent_ip``                       one consul server IP                            ``10.100.0.60``
+``extra_consul.agent_port``                     TCP port of REST API                            ``8500``
+``extra_consul.path_source_of_truth``           top level Key to store info                     ``agnostic_api``
 ==============================================  =============================================   ================================================================================================================================================================================================================
 
 .. code:: yaml
 
-    extra_jumphost:
-      name: jumphost
-      vm_size: Standard_DS1_v2
-      private_ip: 10.13.0.10
-      acl_src_ips:
-        - '10.0.0.0/8'
-      ssh_crt: "-----BEGIN CERTIFICATE-----...-----END CERTIFICATE-----"
+    extra_okta:
+      organization: dev-431905
+      api_key: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      group_name: iac_api_consumers
+      user:
+        name: orchestrator
+        login: orchestrator@acme.com
+        password: pwn3dPassw0rd!
+      app:
+        name: f5-bigip-api.f5app.dev
+      auth_server:
+        name: agnostic-api
+        audience: agnostic
+        scopes:
+          - read:f5_bigip
+          - write:f5_bigip
+          - read:pan_ngfw
+          - write:pan_ngfw
+        claims:
+          - name: f5_bigip
+            scopes:
+            - read:f5_bigip
+            - write:f5_bigip
+          - name: pan_ngfw
+            scopes:
+            - read:pan_ngfw
+            - write:pan_ngfw
 
 A) [SecOps] Deploy Ingress Controller
 ==================================================
