@@ -249,10 +249,9 @@ Troubleshoot
 ==================================================
 Test oAuth configuration:
 
-    :kbd: Okta >> API >> Authorization servers >> MyServer >> Token preview
+:kbd:`Okta >> API >> Authorization servers >> MyServer >> Token preview`
 
-    :kbd: `oidcdebugger <https://oidcdebugger.com/>`_
-
+:kbd:`https://oidcdebugger.com`
 
 
 Reference
