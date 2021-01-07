@@ -108,7 +108,7 @@ Demo
 
 .. raw:: html
 
-    <a href="http://www.youtube.com/watch?v=2QuP4FQ1-EU"><img src="http://img.youtube.com/vi/2QuP4FQ1-EU/0.jpg" width="600" height="400" title="Deploy Ingress Controller" alt="Deploy Ingress Controller"></a>
+    <a href="http://www.youtube.com/watch?v=BMEK_JEi3cc"><img src="http://img.youtube.com/vi/BMEK_JEi3cc/0.jpg" width="600" height="400" title="Create Identity Provider" alt="Create Identity Provider"></a>
 
 Pre-requisites
 ==============
