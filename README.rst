@@ -205,6 +205,7 @@ Extra variable                                  Description                     
 ``extra_consul.agent_scheme``                   scheme to access consul server                  ``http``
 ``extra_consul.agent_ip``                       one consul server IP                            ``10.100.0.60``
 ``extra_consul.agent_port``                     TCP port of REST API                            ``8500``
+``extra_consul.datacenter``                     tenant                                          ``demoLab``
 ``extra_consul.path_source_of_truth``           top level Key to store info                     ``agnostic_api``
 ==============================================  =============================================   ================================================================================================================================================================================================================
 
@@ -237,6 +238,12 @@ Extra variable                                  Description                     
             scopes:
             - read:pan_ngfw
             - write:pan_ngfw
+    extra_consul:
+      agent_scheme: http
+      agent_ip: 10.100.0.60
+      agent_port: 8500
+      datacenter: demoLab
+      path_source_of_truth: agnostic_api
 
 A) [SecOps] Deploy Ingress Controller
 ==================================================
