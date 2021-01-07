@@ -103,48 +103,12 @@ More details `here <https://docs.nginx.com/nginx-app-protect/configuration/#poli
 
 Demo
 ###############
-A) Create Identity Provider
+1) Create Identity Provider
 *********************
 
 .. raw:: html
 
     <a href="http://www.youtube.com/watch?v=2QuP4FQ1-EU"><img src="http://img.youtube.com/vi/2QuP4FQ1-EU/0.jpg" width="600" height="400" title="Deploy Ingress Controller" alt="Deploy Ingress Controller"></a>
-
-B) ToDo
-*********************
-
-.. raw:: html
-
-    <a href="http://www.youtube.com/watch?v=EN6OWU97ogM"><img src="http://img.youtube.com/vi/EN6OWU97ogM/0.jpg" width="600" height="400" title="Publish an Application" alt="Publish an Application"></a>
-
-C) ToDo
-*********************
-
-.. raw:: html
-
-    <a href="http://www.youtube.com/watch?v=SGUMT9Nc5oY"><img src="http://img.youtube.com/vi/SGUMT9Nc5oY/0.jpg" width="600" height="400" title="Update App Security level" alt="Update App Security level"></a>
-
-
-D) ToDo
-*********************
-
-.. raw:: html
-
-    <a href="http://www.youtube.com/watch?v=9VSrPRACjlc"><img src="http://img.youtube.com/vi/9VSrPRACjlc/0.jpg" width="600" height="400" title="Update WAF policy attached to a security level" alt="Update WAF policy attached to a security level"></a>
-
-E) ToDo
-*********************
-
-.. raw:: html
-
-    <a href="http://www.youtube.com/watch?v=dijN4EGLZpQ"><img src="http://img.youtube.com/vi/dijN4EGLZpQ/0.jpg" width="600" height="400" title="Fix false positive" alt="Fix false positive"></a>
-
-F) ToDo
-*********************
-
-.. raw:: html
-
-    <a href="http://www.youtube.com/watch?v=VQ1-2tWeaso"><img src="http://img.youtube.com/vi/VQ1-2tWeaso/0.jpg" width="600" height="400" title="Secure published API" alt="Secure published API"></a>
 
 Pre-requisites
 ==============
