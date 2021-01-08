@@ -249,4 +249,58 @@ Extra variable                                  Description
 ==================================================
 Deploy the infrastructure by following the repository `f5-autoscale-azure <https://github.com/nergalex/f5-autoscale-azure>`_
 
+3) Deploy a DevPortal instance
+==================================================
+Create and launch a workflow template ``wf-deploy_devportal_instance`` that includes those Job templates in this order:
+
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                    objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_create-vm-dev_portal``                              Deploy a VM attached to a public IP                 ``playbooks/poc-azure.yaml``                    ``create-vm-dev_portal``                        ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_install_vm``                                        Install N+                                          ``playbooks/poc-nginx.yaml``                    ``install_vm``                                  ``localhost``                                                                                   ``cred_NGINX``
+``poc-nginx_controller-login``                                  Get NGINX Controller token                          ``playbooks/poc-nginx_controller.yaml``         ``login``                                       ``localhost``
+``poc-nginx_controller-create_location``                        Create a location = VM group on Controller          ``playbooks/poc-nginx_controller.yaml``         ``create_location``                             ``localhost``
+``poc-nginx_vm_managed_nginx``                                  Register VM on NGINX Contoller                      ``playbooks/poc-nginx.yaml``                    ``nginx_vm_managed_nginx``                      ``localhost``                                                                                   ``cred_NGINX``
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================
+Extra variable                                  Description
+==============================================  =============================================
+``extra_nginx_controller_ip``
+``extra_nginx_controller_password``
+``extra_nginx_controller_username``
+``extra_nginx_controller_install_path``         Path to get Controller agent
+``extra_nginx_controller_location``             VM group name on Controller
+``extra_platform_name``                         platform name used for Azure resource group
+``extra_platform_tags``                         Azure VM tags
+``extra_subnet_mgt_on_premise``                 Cross management zone via VPN GW
+``extra_nginx_licence_dir``                     Directory with N+ licences
+``extra_vm``                                    Dict of VM properties
+``extra_vm.name``                               VM name
+``extra_vm.ip``                                 VM IP address
+``extra_vm.size``                               Azure VM type
+``extra_vm.availability_zone``                  Azure AZ
+``extra_vm.location``                           Azure location
+``extra_vm.key_data``                           admin user public key
+==============================================  =============================================
+
+.. code:: yaml
+
+    extra_nginx_controller_ip: 10.0.0.43
+    extra_nginx_controller_password: Cha4ngMe!
+    extra_nginx_controller_username: admin@acme.com
+    extra_nginx_controller_install_path: 1.4/install/controller/
+    extra_nginx_controller_location: devportal
+    extra_platform_name: demoLab
+    extra_platform_tags: environment=DMO platform=demoLab project=CloudBuilderf5
+    extra_subnet_mgt_on_premise: 10.0.0.0/16
+    extra_nginx_licence_dir: /etc/ansible/roles/nginxinc.nginx/files/license
+    extra_vm:
+      name: devportal
+      ip: 10.100.0.63
+      size: Standard_DS3_v2
+      availability_zone: '[1]'
+      location: eastus2
+      key_data: -----BEGIN CERTIFICATE-----...-----END CERTIFICATE-----
+
 
