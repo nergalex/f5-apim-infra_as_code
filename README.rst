@@ -303,4 +303,86 @@ Extra variable                                  Description
       location: eastus2
       key_data: -----BEGIN CERTIFICATE-----...-----END CERTIFICATE-----
 
+4) Create a WAF gateway for an Application
+==================================================
+Create and launch a workflow template ``wf-agnostic_api-create_waf`` that includes those Job templates in this order:
+
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                          objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_get-vmss-facts-credential_set``                           Get VMs IPs from VMSS                               ``playbooks/poc-azure.yaml``                    ``get-vmss-facts-credential_set``               ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_controller-agnostic_api-create_cas_gw_app_component``     Create object in NGINX Controller                   ``playbooks/poc-nginx_controller.yaml``         ``agnostic_api-create_cas_gw_app_component``    ``localhost``
+``poc-consul_agnostic_api-register_waf_info``                         Save WAF information in Key/Value store             ``playbooks/poc-consul.yaml``                   ``agnostic_api-register_waf_info``              ``localhost``
+``wf-agnostic_api-nap_update_waf_policy``                             Launch workflow to update WAF policies
+``poc-azure_get-elb-public-ip``                                       Get public IP to access to WAF                      ``playbooks/poc-azure.yaml``                    ``get-elb-public-ip``                           ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-f5_cs-deploy_gslb``                                             Deploy application on public DNS                    ``playbooks/poc-f5_cs.yaml``                    ``deploy_gslb``                                 ``localhost``
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================
+Extra variable                                  Description
+==============================================  =============================================
+``extra_consul``                                dict of Consul properties
+``extra_consul.agent_scheme``                   scheme to access consul server
+``extra_consul.agent_ip``                       one consul server IP
+``extra_consul.agent_port``                     TCP port of REST API
+``extra_consul.datacenter``                     tenant
+``extra_consul.path_source_of_truth``           top level Key to store info
+``extra_nginx_controller``                      dict of NGINX Controller properties
+``extra_cs``                                    dict of F5 Cloud Services properties
+``extra_app``                                   dict of App properties
+``extra_app.name``                              product name
+``extra_app.domain``                            DNS domain
+``extra_app.environment``                       editor name
+``extra_app.layer``                             display WAF in gateway object
+``extra_app.waf.policy_uri``                    openAPI spec file
+``extra_app.gateways.location``                 Azure VMSS name
+``extra_app.components``                        Dict of PATH properties
+``extra_app.components.name``                   Logical name
+``extra_app.components.uri``                    PATH prefix
+``extra_app.components.workloads``              ILB VIP that load-balances API GWs
+``extra_app.components.monitor_uri``            Health Check page
+``extra_app.components.gslb_location``          List of geolocation used by GSLB
+``extra_app_tls_key``                           Survey: SSL/TLS key in PEM format
+``extra_app_tls_crt``                           Survey: SSL/TLS certificat in PEM format
+``extra_vmss_name``                             Azure VMSS WAF
+``extra_platform_name``                         platform name used for Azure resource group
+==============================================  =============================================
+
+.. code:: yaml
+
+    extra_consul:
+      agent_scheme: http
+      agent_ip: 10.100.0.60
+      agent_port: 8500
+      datacenter: demoLab
+      path_source_of_truth: agnostic_api
+    extra_nginx_controller:
+      ip: 10.0.0.43
+      password: Cha4ngMe!
+      username: admin@acme.com
+    extra_cs:
+      username: admin@acme.com
+      password: Cha4ngMe!
+      hostname: api.cloudservices.f5.com
+      api_version: v1
+    extra_app:
+      name: f5-bigip-api
+      domain: f5app.dev
+      environment: f5
+      layer: WAF
+      waf:
+        policy_uri: https://raw.githubusercontent.com/nergalex/f5-nap-policies/master/policy/f5-bigip.api.f5app.dev.json
+      gateways:
+        location: nginxwaf
+      components:
+        - name: main
+          uri: /
+          workloads:
+            - 'http://10.100.11.1'
+          monitor_uri: '/'
+      gslb_location:
+        - eu
+    extra_vmss_name: nginxwaf
+    extra_platform_name: demoLab
+
 
