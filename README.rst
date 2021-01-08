@@ -110,6 +110,29 @@ Demo
 
     <a href="http://www.youtube.com/watch?v=BMEK_JEi3cc"><img src="http://img.youtube.com/vi/BMEK_JEi3cc/0.jpg" width="600" height="400" title="Create Identity Provider" alt="Create Identity Provider"></a>
 
+2) View DevPortal and API Management configuration
+*********************
+
+.. raw:: html
+
+    <a href="http://www.youtube.com/watch?v=G5uqqotrbIc"><img src="http://img.youtube.com/vi/G5uqqotrbIc/0.jpg" width="600" height="400" title="View DevPortal and API Management configuration" alt="View DevPortal and API Management configuration"></a>
+
+
+3) View WAF configuration and analytics
+*********************
+
+.. raw:: html
+
+    <a href="http://www.youtube.com/watch?v=1me9fKufB9s"><img src="http://img.youtube.com/vi/1me9fKufB9s/0.jpg" width="600" height="400" title="View WAF configuration and analytics" alt="View WAF configuration and analytics"></a>
+
+
+4) End to end flow
+*********************
+
+.. raw:: html
+
+    <a href="http://www.youtube.com/watch?v=bdubjSjoXoQ"><img src="http://img.youtube.com/vi/bdubjSjoXoQ/0.jpg" width="600" height="400" title="End to end flow" alt="End to end flow"></a>
+
 Pre-requisites
 ==============
 Okta
