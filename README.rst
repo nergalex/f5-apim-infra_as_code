@@ -577,10 +577,30 @@ Extra variable                                  Description
       admin_user: admin
       admin_password: Ch4ngeMe!
 
-Schedules
-*********************
-Because access token on BIG-IP have a lifetime of 10 hours, it is necessary to update API GW with a new token each hour.
-
-.. figure:: _figures/schedules.png
 
 
+Troubleshoot
+==================================================
+Test oAuth configuration:
+
+:kbd:`Okta >> API >> Authorization servers >> MyServer >> Token preview`
+
+:kbd:`https://oidcdebugger.com`
+
+Decode JWT:
+
+:kbd:`https://jwt.io`
+
+Check OpenAPI syntax:
+
+:kbd:`https://app.swaggerhub.com/`
+
+Reference
+==================================================
+- `NGINX API Management webinar <https://www.nginx.com/resources/webinars/nginx-controller-coffee-july-2020/>`_
+- `NGINX and OAuth + OpenID Connect <https://github.com/nginxinc/nginx-openid-connect>`_
+- `Okta and OAuth + OpenID Connect <https://www.youtube.com/watch?v=0VWkQMr7r_c>`_
+- `Define OAuth grant type regarding a use case <https://accetal.fr/oauth2-pour-securiser-les-api/>`_
+- `oAuth OpenID Connect test tool <https://oidcdebugger.com/>`_
+- `WAF policies repository <https://github.com/nergalex/f5-nap-policies>`_
+- `Swaggerhub <https://app.swaggerhub.com/>`_
