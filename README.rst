@@ -516,64 +516,36 @@ Extra variable                                  Description
 
 7) Create or update API GW Component
 ==================================================
-Workflow
+
+
+Schedules
 *********************
-Create and launch a workflow template ``wf-agnostic_api-update_apim_component`` that includes those Job templates in this order:
+Because access token on BIG-IP have a lifetime of 10 hours, it is necessary to update API GW with a new token each hour.
 
-===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
-Job template                                                          objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
-===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
-``poc-consul_agnostic_api-get_list_json``                             Get IdP info                                        ``playbooks/poc-consul.yaml``                   ``agnostic_api-get_list_json``                  ``localhost``
-``poc-azure_get-vmss-facts-credential_set``                           Get VMs IPs from VMSS                               ``playbooks/poc-azure.yaml``                    ``get-vmss-facts-credential_set``               ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-nginx_controller-agnostic_api-create_apim_gw_app_api``          Create API GW                                       ``playbooks/poc-nginx_controller.yaml``         ``agnostic_api-create_apim_gw_app_api``         ``localhost``
-``wf-agnostic_api-update_apim_component``                             Create or update API GW Component
-``poc-nginx_controller-agnostic_api-create_devportal``                Create DevPortal                                    ``playbooks/poc-nginx_controller.yaml``         ``agnostic_api-create_devportal``               ``localhost``
-``poc-azure_get-vm-devportal``                                        Get public IP of DevPortal VM                       ``playbooks/poc-azure.yaml``                    ``get-elb-public-ip``                           ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-f5_cs-deploy_gslb``                                             Deploy DevPortal on public DNS                      ``playbooks/poc-f5_cs.yaml``                    ``deploy_gslb``                                 ``localhost``
-===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+.. figure:: _figures/schedules.png
 
-==============================================  =============================================
-Extra variable                                  Description
-==============================================  =============================================
-``extra_nginx_controller``                      dict of NGINX Controller properties
-``extra_nginx_controller.ip``
-``extra_nginx_controller.password``
-``extra_nginx_controller.username``
-``extra_app``                                   dict of App properties
-``extra_app.name``                              product name
-``extra_app.domain``                            DNS domain
-``extra_app.environment``                       editor name
-``extra_app.layer``                             display API GW in gateway object
-``extra_app.claim``                             Conditional access based on claim
-``extra_app.gateways.location``                 Azure VMSS name
-``extra_app.components``                        Dict of PATH properties
-``extra_app.components.name``                   Logical name
-``extra_app.components.uri``                    Base PATH prefix
-``extra_app.components.workloads``              F5 BIG-IP management IPs
-``extra_app.components.monitor_uri``            Health Check page
-``extra_bigip``                                 dict of BIG-IP properties
-==============================================  =============================================
+Troubleshoot
+==================================================
+Test oAuth configuration:
 
-.. code:: yaml
+:kbd:`Okta >> API >> Authorization servers >> MyServer >> Token preview`
 
-    extra_app:
-      name: f5-bigip-api
-      domain: f5app.dev
-      environment: f5
-      claim: f5_bigip
-      components:
-        - name: v1
-          version: v1.0.1
-          workloads:
-            - '10.100.0.7'
-          monitor_uri: '/'
-    extra_nginx_controller:
-      ip: 10.0.0.43
-      password: Ch4ngeMe!
-      username: admin@acme.com
-    extra_bigip:
-      ip: 10.100.0.7
-      port: 443
-      admin_user: admin
-      admin_password: Ch4ngeMe!
+:kbd:`https://oidcdebugger.com`
 
+Decode JWT:
+
+:kbd:`https://jwt.io`
+
+Check OpenAPI syntax:
+
+:kbd:`https://app.swaggerhub.com/`
+
+Reference
+==================================================
+- `NGINX API Management webinar <https://www.nginx.com/resources/webinars/nginx-controller-coffee-july-2020/>`_
+- `NGINX and OAuth + OpenID Connect <https://github.com/nginxinc/nginx-openid-connect>`_
+- `Okta and OAuth + OpenID Connect <https://www.youtube.com/watch?v=0VWkQMr7r_c>`_
+- `Define OAuth grant type regarding a use case <https://accetal.fr/oauth2-pour-securiser-les-api/>`_
+- `oAuth OpenID Connect test tool <https://oidcdebugger.com/>`_
+- `WAF policies repository <https://github.com/nergalex/f5-nap-policies>`_
+- `Swaggerhub <https://app.swaggerhub.com/>`_
