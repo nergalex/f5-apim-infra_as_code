@@ -577,4 +577,10 @@ Extra variable                                  Description
       admin_user: admin
       admin_password: Ch4ngeMe!
 
+Schedules
+*********************
+Because access token on BIG-IP have a lifetime of 10 hours, it is necessary to update API GW with a new token each hour.
+
+.. figure:: _figures/schedules.png
+
 
