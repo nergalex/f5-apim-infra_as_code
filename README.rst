@@ -181,33 +181,33 @@ Job template                                                    objective       
 ``poc-consul_agnostic_api-register_idp_info``                   Save info in Key/Value store                        ``playbooks/poc-consul.yaml``                  ``register_idp_info``                            localhost                                       localhost
 =============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 
-==============================================  =============================================   ================================================================================================================================================================================================================
-Extra variable                                  Description                                     Example
-==============================================  =============================================   ================================================================================================================================================================================================================
-``extra_okta``                                  dict with properties regarding Okta
-``extra_okta.organization``                     domain (see § Pre-requisites)                   ``dev-431905``
+==============================================  =============================================
+Extra variable                                  Description
+==============================================  =============================================
+``extra_okta``                                  dict of Okta properties
+``extra_okta.organization``                     domain (see § Pre-requisites)
 ``extra_okta.api_key``                          API key (see § Pre-requisites)
-``extra_okta.group_name``                       user group                                      ``iac_api_consumers``
-``extra_okta.user``                             dict with user properties
-``extra_okta.user.name``                        user name                                       ``orchestrator``
-``extra_okta.user.login``                       user login                                      ``orchestrator@acme.com``
-``extra_okta.user.password``                    user password                                   ``pwn3dPassw0rd!``
-``extra_okta.app``                              dict with app properties
-``extra_okta.app.name``                         infra product. Example: F5, PAN...              ``f5-bigip-api.f5app.dev``
-``extra_okta.auth_server``                      dict with authorization server properties
-``extra_okta.auth_server.name``                 server name                                     ``agnostic-api``
-``extra_okta.auth_server.audience``             short name that specifies auth server           ``agnostic``
-``extra_okta.auth_server.scopes``               list of allowed scopes                          ``['read:f5_bigip', ...]``
+``extra_okta.group_name``                       user group
+``extra_okta.user``                             dict of user properties
+``extra_okta.user.name``                        user name
+``extra_okta.user.login``                       user login
+``extra_okta.user.password``                    user password
+``extra_okta.app``                              dict of app properties
+``extra_okta.app.name``                         infra product. Example: F5, PAN...
+``extra_okta.auth_server``                      dict of authorization server properties
+``extra_okta.auth_server.name``                 server name
+``extra_okta.auth_server.audience``             short name that specifies auth server
+``extra_okta.auth_server.scopes``               list of allowed scopes
 ``extra_okta.auth_server.claims``               list of claims
-``extra_okta.auth_server.claims.X.name``        authorized access value to an infra perimeter   ``f5_bigip``
-``extra_okta.auth_server.claims.X.scopes``      list of scopes authorized to have this claim    ``['read:f5_bigip', ...]``
-``extra_consul``                                dict with properties regarding Consul
-``extra_consul.agent_scheme``                   scheme to access consul server                  ``http``
-``extra_consul.agent_ip``                       one consul server IP                            ``10.100.0.60``
-``extra_consul.agent_port``                     TCP port of REST API                            ``8500``
-``extra_consul.datacenter``                     tenant                                          ``demoLab``
-``extra_consul.path_source_of_truth``           top level Key to store info                     ``agnostic_api``
-==============================================  =============================================   ================================================================================================================================================================================================================
+``extra_okta.auth_server.claims.X.name``        authorized access value to an infra perimeter
+``extra_okta.auth_server.claims.X.scopes``      list of scopes authorized to have this claim
+``extra_consul``                                dict of Consul properties
+``extra_consul.agent_scheme``                   scheme to access consul server
+``extra_consul.agent_ip``                       one consul server IP
+``extra_consul.agent_port``                     TCP port of REST API
+``extra_consul.datacenter``                     tenant
+``extra_consul.path_source_of_truth``           top level Key to store info
+==============================================  =============================================
 
 .. code:: yaml
 
@@ -245,6 +245,344 @@ Extra variable                                  Description                     
       datacenter: demoLab
       path_source_of_truth: agnostic_api
 
+2) Deploy infrastructure
+==================================================
+Deploy the infrastructure by following the repository `f5-autoscale-azure <https://github.com/nergalex/f5-autoscale-azure>`_
+
+3) Deploy a DevPortal instance
+==================================================
+Create and launch a workflow template ``wf-deploy_devportal_instance`` that includes those Job templates in this order:
+
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                    objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_create-vm-dev_portal``                              Deploy a VM attached to a public IP                 ``playbooks/poc-azure.yaml``                    ``create-vm-dev_portal``                        ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_install_vm``                                        Install N+                                          ``playbooks/poc-nginx.yaml``                    ``install_vm``                                  ``localhost``                                                                                   ``cred_NGINX``
+``poc-nginx_controller-login``                                  Get NGINX Controller token                          ``playbooks/poc-nginx_controller.yaml``         ``login``                                       ``localhost``
+``poc-nginx_controller-create_location``                        Create a location = VM group on Controller          ``playbooks/poc-nginx_controller.yaml``         ``create_location``                             ``localhost``
+``poc-nginx_vm_managed_nginx``                                  Register VM on NGINX Contoller                      ``playbooks/poc-nginx.yaml``                    ``nginx_vm_managed_nginx``                      ``localhost``                                                                                   ``cred_NGINX``
+=============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================
+Extra variable                                  Description
+==============================================  =============================================
+``extra_nginx_controller_ip``
+``extra_nginx_controller_password``
+``extra_nginx_controller_username``
+``extra_nginx_controller_install_path``         Path to get Controller agent
+``extra_nginx_controller_location``             VM group name on Controller
+``extra_platform_name``                         platform name used for Azure resource group
+``extra_platform_tags``                         Azure VM tags
+``extra_subnet_mgt_on_premise``                 Cross management zone via VPN GW
+``extra_nginx_licence_dir``                     Directory with N+ licences
+``extra_vm``                                    Dict of VM properties
+``extra_vm.name``                               VM name
+``extra_vm.ip``                                 VM IP address
+``extra_vm.size``                               Azure VM type
+``extra_vm.availability_zone``                  Azure AZ
+``extra_vm.location``                           Azure location
+``extra_vm.key_data``                           admin user public key
+==============================================  =============================================
+
+.. code:: yaml
+
+    extra_nginx_controller_ip: 10.0.0.43
+    extra_nginx_controller_password: Cha4ngMe!
+    extra_nginx_controller_username: admin@acme.com
+    extra_nginx_controller_install_path: 1.4/install/controller/
+    extra_nginx_controller_location: devportal
+    extra_platform_name: demoLab
+    extra_platform_tags: environment=DMO platform=demoLab project=CloudBuilderf5
+    extra_subnet_mgt_on_premise: 10.0.0.0/16
+    extra_nginx_licence_dir: /etc/ansible/roles/nginxinc.nginx/files/license
+    extra_vm:
+      name: devportal
+      ip: 10.100.0.63
+      size: Standard_DS3_v2
+      availability_zone: '[1]'
+      location: eastus2
+      key_data: -----BEGIN CERTIFICATE-----...-----END CERTIFICATE-----
+
+4) Create a WAF gateway for an Application
+==================================================
+Create and launch a workflow template ``wf-agnostic_api-create_waf`` that includes those Job templates in this order:
+
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                          objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_get-vmss-facts-credential_set``                           Get VMs IPs from VMSS                               ``playbooks/poc-azure.yaml``                    ``get-vmss-facts-credential_set``               ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_controller-agnostic_api-create_cas_gw_app_component``     Create object in NGINX Controller                   ``playbooks/poc-nginx_controller.yaml``         ``agnostic_api-create_cas_gw_app_component``    ``localhost``
+``poc-consul_agnostic_api-register_waf_info``                         Save WAF information in Key/Value store             ``playbooks/poc-consul.yaml``                   ``agnostic_api-register_waf_info``              ``localhost``
+``wf-agnostic_api-nap_update_waf_policy``                             Launch workflow to update WAF policies
+``poc-azure_get-elb-public-ip``                                       Get public IP to access to WAF                      ``playbooks/poc-azure.yaml``                    ``get-elb-public-ip``                           ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-f5_cs-deploy_gslb``                                             Deploy application on public DNS                    ``playbooks/poc-f5_cs.yaml``                    ``deploy_gslb``                                 ``localhost``
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================
+Extra variable                                  Description
+==============================================  =============================================
+``extra_consul``                                dict of Consul properties
+``extra_consul.agent_scheme``                   scheme to access consul server
+``extra_consul.agent_ip``                       one consul server IP
+``extra_consul.agent_port``                     TCP port of REST API
+``extra_consul.datacenter``                     tenant
+``extra_consul.path_source_of_truth``           top level Key to store info
+``extra_nginx_controller``                      dict of NGINX Controller properties
+``extra_cs``                                    dict of F5 Cloud Services properties
+``extra_app``                                   dict of App properties
+``extra_app.name``                              product name
+``extra_app.domain``                            DNS domain
+``extra_app.environment``                       editor name
+``extra_app.layer``                             display WAF in gateway object
+``extra_app.waf.policy_uri``                    openAPI spec file
+``extra_app.gateways.location``                 Azure VMSS name
+``extra_app.components``                        Dict of PATH properties
+``extra_app.components.name``                   Logical name
+``extra_app.components.uri``                    PATH prefix
+``extra_app.components.workloads``              ILB VIP that load-balances API GWs
+``extra_app.components.monitor_uri``            Health Check page
+``extra_app.components.gslb_location``          List of geolocation used by GSLB
+``extra_app_tls_key``                           Survey: SSL/TLS key in PEM format
+``extra_app_tls_crt``                           Survey: SSL/TLS certificat in PEM format
+``extra_vmss_name``                             Azure VMSS WAF
+``extra_platform_name``                         platform name used for Azure resource group
+==============================================  =============================================
+
+.. code:: yaml
+
+    extra_consul:
+      agent_scheme: http
+      agent_ip: 10.100.0.60
+      agent_port: 8500
+      datacenter: demoLab
+      path_source_of_truth: agnostic_api
+    extra_nginx_controller:
+      ip: 10.0.0.43
+      password: Cha4ngMe!
+      username: admin@acme.com
+    extra_cs:
+      username: admin@acme.com
+      password: Cha4ngMe!
+      hostname: api.cloudservices.f5.com
+      api_version: v1
+    extra_app:
+      name: f5-bigip-api
+      domain: f5app.dev
+      environment: f5
+      layer: WAF
+      waf:
+        policy_uri: https://raw.githubusercontent.com/nergalex/f5-nap-policies/master/policy/f5-bigip.api.f5app.dev.json
+      gateways:
+        location: nginxwaf
+      components:
+        - name: main
+          uri: /
+          workloads:
+            - 'http://10.100.11.1'
+          monitor_uri: '/'
+      gslb_location:
+        - eu
+    extra_vmss_name: nginxwaf
+    extra_platform_name: demoLab
+
+5) Update WAF policy
+==================================================
+NGINX Controller will be able to manage a WAF policy repository very soon.
+This workflow update directly WAF policy on WAF instances i.e. NGINX App Protect.
+
+Create and launch a workflow template ``wf-agnostic_api-nap_update_waf_policy`` that includes those Job templates in this order:
+
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                          objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_get-vmss-facts-credential_set``                           Get VMs IPs from VMSS                               ``playbooks/poc-azure.yaml``                    ``get-vmss-facts-credential_set``               ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-consul_list_json``                                              Get list of deployed Application from K/V           ``playbooks/poc-consul.yaml``                   ``list_json``                                   ``localhost``
+``poc-nginx_agnostic_api-update_nap_policies``                        Update WAF policies                                 ``playbooks/poc-nginx.yaml``                    ``nginx_vm_managed_nginx``                      ``localhost``                                                                                   ``cred_NGINX``
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================
+Extra variable                                  Description
+==============================================  =============================================
+``extra_consul_agent_scheme``                   scheme to access consul server
+``extra_consul_agent_ip``                       one consul server IP
+``extra_consul_agent_port``                     TCP port of REST API
+``extra_consul_datacenter``                     tenant
+``extra_consul_path_source_of_truth``           top level Key to store info
+``extra_consul_path_lookup``                    second level Key to lookup
+``extra_waf_policies_repo``                     GitHub repo of WAF policies
+``extra_vmss_name``                             Azure VMSS WAF
+``extra_platform_name``                         platform name used for Azure resource group
+==============================================  =============================================
+
+.. code:: yaml
+
+    extra_waf_policies_repo: https://github.com/nergalex/f5-nap-policies.git
+    extra_vmss_name: nginxwaf
+    extra_platform_name: demoLab
+    extra_consul_path_source_of_truth: agnostic_api
+    extra_consul_path_lookup: server_names
+    extra_consul_agent_scheme: http
+    extra_consul_agent_ip: 10.100.0.60
+    extra_consul_agent_port: 8500
+    extra_consul_datacenter: demoLab
+
+6) Create an API GW for an Application
+==================================================
+Create and launch a workflow template ``wf-agnostic_api-create_api_gw`` that includes those Job templates in this order:
+
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                          objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-consul_agnostic_api-get_list_json``                             Get IdP info                                        ``playbooks/poc-consul.yaml``                   ``agnostic_api-get_list_json``                  ``localhost``
+``poc-azure_get-vmss-facts-credential_set``                           Get VMs IPs from VMSS                               ``playbooks/poc-azure.yaml``                    ``get-vmss-facts-credential_set``               ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_controller-agnostic_api-create_apim_gw_app_api``          Create API GW                                       ``playbooks/poc-nginx_controller.yaml``         ``agnostic_api-create_apim_gw_app_api``         ``localhost``
+``wf-agnostic_api-update_apim_component``                             Create or update API GW Component
+``poc-nginx_controller-agnostic_api-create_devportal``                Create DevPortal                                    ``playbooks/poc-nginx_controller.yaml``         ``agnostic_api-create_devportal``               ``localhost``
+``poc-azure_get-vm-devportal``                                        Get public IP of DevPortal VM                       ``playbooks/poc-azure.yaml``                    ``get-elb-public-ip``                           ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-f5_cs-deploy_gslb``                                             Deploy DevPortal on public DNS                      ``playbooks/poc-f5_cs.yaml``                    ``deploy_gslb``                                 ``localhost``
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================
+Extra variable                                  Description
+==============================================  =============================================
+``extra_devportal.vm_name``                     DevPortal VM name
+``extra_vmss_name``                             Azure VMSS WAF
+``extra_platform_name``                         platform name used for Azure resource group
+``extra_consul``                                dict of Consul properties
+``extra_consul.agent_scheme``                   scheme to access consul server
+``extra_consul.agent_ip``                       one consul server IP
+``extra_consul.agent_port``                     TCP port of REST API
+``extra_consul.datacenter``                     tenant
+``extra_consul.path_source_of_truth``           top level Key to store info
+``extra_nginx_controller``                      dict of NGINX Controller properties
+``extra_cs``                                    dict of F5 Cloud Services properties
+``extra_app``                                   dict of App properties
+``extra_app.name``                              product name
+``extra_app.domain``                            DNS domain
+``extra_app.environment``                       editor name
+``extra_app.layer``                             display API GW in gateway object
+``extra_app.claim``                             Conditional access based on claim
+``extra_app.gateways.location``                 Azure VMSS name
+``extra_app.gslb_location``                     List of geolocation used by GSLB
+``extra_app.components``                        Dict of PATH properties
+``extra_app.components.name``                   Logical name
+``extra_app.components.uri``                    Base PATH prefix
+``extra_app.components.workloads``              F5 BIG-IP management IPs
+``extra_app.components.monitor_uri``            Health Check page
+``extra_app_tls_key``                           Survey: SSL/TLS key in PEM format
+``extra_app_tls_crt``                           Survey: SSL/TLS certificat in PEM format
+==============================================  =============================================
+
+.. code:: yaml
+
+    extra_devportal:
+      vm_name: devportal
+    extra_vmss_name: nginxapigw
+    extra_platform_name: demoLab
+    extra_app:
+      name: f5-bigip-api
+      domain: f5app.dev
+      environment: f5
+      layer: "API GW"
+      claim: f5_bigip
+      gateways:
+        location: nginxapigw
+      gslb_location:
+        - eu
+      components:
+        - name: v1
+          uri: /v1/
+          version: v1.0.1
+          openapi_spec_uri: https://raw.githubusercontent.com/nergalex/f5-nap-policies/master/policy/open-api-files/f5-bigip.api.f5app.dev.json
+          workloads:
+            - '10.100.0.7'
+          monitor_uri: '/'
+    extra_nginx_controller:
+      ip: 10.0.0.43
+      password: Ch4ngeMe!
+      username: admin@acme.com
+    extra_consul:
+      agent_scheme: http
+      agent_ip: 10.100.0.60
+      agent_port: 8500
+      datacenter: demoLab
+      path_source_of_truth: agnostic_api
+      path_lookup: server_names
+    extra_cs:
+      username: admin@acme.com
+      password: Ch4ngeMe!
+      hostname: api.cloudservices.f5.com
+      api_version: v1
+
+7) Create or update API GW Component
+==================================================
+Workflow
+*********************
+Create and launch a workflow template ``wf-agnostic_api-update_apim_component`` that includes those Job templates in this order:
+
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                          objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-consul_agnostic_api-get_list_json``                             Get IdP info                                        ``playbooks/poc-consul.yaml``                   ``agnostic_api-get_list_json``                  ``localhost``
+``poc-azure_get-vmss-facts-credential_set``                           Get VMs IPs from VMSS                               ``playbooks/poc-azure.yaml``                    ``get-vmss-facts-credential_set``               ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_controller-agnostic_api-create_apim_gw_app_api``          Create API GW                                       ``playbooks/poc-nginx_controller.yaml``         ``agnostic_api-create_apim_gw_app_api``         ``localhost``
+``wf-agnostic_api-update_apim_component``                             Create or update API GW Component
+``poc-nginx_controller-agnostic_api-create_devportal``                Create DevPortal                                    ``playbooks/poc-nginx_controller.yaml``         ``agnostic_api-create_devportal``               ``localhost``
+``poc-azure_get-vm-devportal``                                        Get public IP of DevPortal VM                       ``playbooks/poc-azure.yaml``                    ``get-elb-public-ip``                           ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-f5_cs-deploy_gslb``                                             Deploy DevPortal on public DNS                      ``playbooks/poc-f5_cs.yaml``                    ``deploy_gslb``                                 ``localhost``
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================
+Extra variable                                  Description
+==============================================  =============================================
+``extra_nginx_controller``                      dict of NGINX Controller properties
+``extra_nginx_controller.ip``
+``extra_nginx_controller.password``
+``extra_nginx_controller.username``
+``extra_app``                                   dict of App properties
+``extra_app.name``                              product name
+``extra_app.domain``                            DNS domain
+``extra_app.environment``                       editor name
+``extra_app.layer``                             display API GW in gateway object
+``extra_app.claim``                             Conditional access based on claim
+``extra_app.gateways.location``                 Azure VMSS name
+``extra_app.components``                        Dict of PATH properties
+``extra_app.components.name``                   Logical name
+``extra_app.components.uri``                    Base PATH prefix
+``extra_app.components.workloads``              F5 BIG-IP management IPs
+``extra_app.components.monitor_uri``            Health Check page
+``extra_bigip``                                 dict of BIG-IP properties
+==============================================  =============================================
+
+.. code:: yaml
+
+    extra_app:
+      name: f5-bigip-api
+      domain: f5app.dev
+      environment: f5
+      claim: f5_bigip
+      components:
+        - name: v1
+          version: v1.0.1
+          workloads:
+            - '10.100.0.7'
+          monitor_uri: '/'
+    extra_nginx_controller:
+      ip: 10.0.0.43
+      password: Ch4ngeMe!
+      username: admin@acme.com
+    extra_bigip:
+      ip: 10.100.0.7
+      port: 443
+      admin_user: admin
+      admin_password: Ch4ngeMe!
+
+Schedules
+*********************
+Because access token on BIG-IP have a lifetime of 10 hours, it is necessary to update API GW with a new token each hour.
+
+.. figure:: _figures/schedules.png
+
 Troubleshoot
 ==================================================
 Test oAuth configuration:
@@ -253,8 +591,20 @@ Test oAuth configuration:
 
 :kbd:`https://oidcdebugger.com`
 
+Decode JWT:
+
+:kbd:`https://jwt.io`
+
+Check OpenAPI syntax:
+
+:kbd:`https://app.swaggerhub.com/`
 
 Reference
 ==================================================
+- `NGINX API Management webinar <https://www.nginx.com/resources/webinars/nginx-controller-coffee-july-2020/>`_
+- `NGINX and OAuth + OpenID Connect <https://github.com/nginxinc/nginx-openid-connect>`_
+- `Okta and OAuth + OpenID Connect <https://www.youtube.com/watch?v=0VWkQMr7r_c>`_
+- `Define OAuth grant type regarding a use case <https://accetal.fr/oauth2-pour-securiser-les-api/>`_
 - `oAuth OpenID Connect test tool <https://oidcdebugger.com/>`_
 - `WAF policies repository <https://github.com/nergalex/f5-nap-policies>`_
+- `Swaggerhub <https://app.swaggerhub.com/>`_
