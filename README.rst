@@ -385,4 +385,45 @@ Extra variable                                  Description
     extra_vmss_name: nginxwaf
     extra_platform_name: demoLab
 
+5) Update WAF policy
+==================================================
+NGINX Controller will be able to manage a WAF policy repository very soon.
+This workflow update directly WAF policy on WAF instances i.e. NGINX App Protect.
+
+Create and launch a workflow template ``wf-agnostic_api-nap_update_waf_policy`` that includes those Job templates in this order:
+
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                          objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-azure_get-vmss-facts-credential_set``                           Get VMs IPs from VMSS                               ``playbooks/poc-azure.yaml``                    ``get-vmss-facts-credential_set``               ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-consul_list_json``                                              Get list of deployed Application from K/V           ``playbooks/poc-consul.yaml``                   ``list_json``                                   ``localhost``
+``poc-nginx_agnostic_api-update_nap_policies``                        Update WAF policies                                 ``playbooks/poc-nginx.yaml``                    ``nginx_vm_managed_nginx``                      ``localhost``                                                                                   ``cred_NGINX``
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================
+Extra variable                                  Description
+==============================================  =============================================
+``extra_consul_agent_scheme``                   scheme to access consul server
+``extra_consul_agent_ip``                       one consul server IP
+``extra_consul_agent_port``                     TCP port of REST API
+``extra_consul_datacenter``                     tenant
+``extra_consul_path_source_of_truth``           top level Key to store info
+``extra_consul_path_lookup``                    second level Key to lookup
+``extra_waf_policies_repo``                     GitHub repo of WAF policies
+``extra_vmss_name``                             Azure VMSS WAF
+``extra_platform_name``                         platform name used for Azure resource group
+==============================================  =============================================
+
+.. code:: yaml
+
+    extra_waf_policies_repo: https://github.com/nergalex/f5-nap-policies.git
+    extra_vmss_name: nginxwaf
+    extra_platform_name: demoLab
+    extra_consul_path_source_of_truth: agnostic_api
+    extra_consul_path_lookup: server_names
+    extra_consul_agent_scheme: http
+    extra_consul_agent_ip: 10.100.0.60
+    extra_consul_agent_port: 8500
+    extra_consul_datacenter: demoLab
+
 
