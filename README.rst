@@ -426,4 +426,92 @@ Extra variable                                  Description
     extra_consul_agent_port: 8500
     extra_consul_datacenter: demoLab
 
+6) Create an API GW for an Application
+==================================================
+Create and launch a workflow template ``wf-agnostic_api-create_api_gw`` that includes those Job templates in this order:
+
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+Job template                                                          objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+``poc-consul_agnostic_api-get_list_json``                             Get IdP info                                        ``playbooks/poc-consul.yaml``                   ``agnostic_api-get_list_json``                  ``localhost``
+``poc-azure_get-vmss-facts-credential_set``                           Get VMs IPs from VMSS                               ``playbooks/poc-azure.yaml``                    ``get-vmss-facts-credential_set``               ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-nginx_controller-agnostic_api-create_apim_gw_app_api``          Create API GW                                       ``playbooks/poc-nginx_controller.yaml``         ``agnostic_api-create_apim_gw_app_api``         ``localhost``
+``wf-agnostic_api-update_apim_component``                             Create or update API GW Component
+``poc-nginx_controller-agnostic_api-create_devportal``                Create DevPortal                                    ``playbooks/poc-nginx_controller.yaml``         ``agnostic_api-create_devportal``               ``localhost``
+``poc-azure_get-vm-devportal``                                        Get public IP of DevPortal VM                       ``playbooks/poc-azure.yaml``                    ``get-elb-public-ip``                           ``my_project``                                  ``localhost``                                   ``my_azure_credential``
+``poc-f5_cs-deploy_gslb``                                             Deploy DevPortal on public DNS                      ``playbooks/poc-f5_cs.yaml``                    ``deploy_gslb``                                 ``localhost``
+===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
+
+==============================================  =============================================
+Extra variable                                  Description
+==============================================  =============================================
+``extra_devportal.vm_name``                     DevPortal VM name
+``extra_vmss_name``                             Azure VMSS WAF
+``extra_platform_name``                         platform name used for Azure resource group
+``extra_consul``                                dict of Consul properties
+``extra_consul.agent_scheme``                   scheme to access consul server
+``extra_consul.agent_ip``                       one consul server IP
+``extra_consul.agent_port``                     TCP port of REST API
+``extra_consul.datacenter``                     tenant
+``extra_consul.path_source_of_truth``           top level Key to store info
+``extra_nginx_controller``                      dict of NGINX Controller properties
+``extra_cs``                                    dict of F5 Cloud Services properties
+``extra_app``                                   dict of App properties
+``extra_app.name``                              product name
+``extra_app.domain``                            DNS domain
+``extra_app.environment``                       editor name
+``extra_app.layer``                             display API GW in gateway object
+``extra_app.claim``                             Conditional access based on claim
+``extra_app.gateways.location``                 Azure VMSS name
+``extra_app.gslb_location``                     List of geolocation used by GSLB
+``extra_app.components``                        Dict of PATH properties
+``extra_app.components.name``                   Logical name
+``extra_app.components.uri``                    Base PATH prefix
+``extra_app.components.workloads``              F5 BIG-IP management IPs
+``extra_app.components.monitor_uri``            Health Check page
+``extra_app_tls_key``                           Survey: SSL/TLS key in PEM format
+``extra_app_tls_crt``                           Survey: SSL/TLS certificat in PEM format
+==============================================  =============================================
+
+.. code:: yaml
+
+    extra_devportal:
+      vm_name: devportal
+    extra_vmss_name: nginxapigw
+    extra_platform_name: demoLab
+    extra_app:
+      name: f5-bigip-api
+      domain: f5app.dev
+      environment: f5
+      layer: "API GW"
+      claim: f5_bigip
+      gateways:
+        location: nginxapigw
+      gslb_location:
+        - eu
+      components:
+        - name: v1
+          uri: /v1/
+          version: v1.0.1
+          openapi_spec_uri: https://raw.githubusercontent.com/nergalex/f5-nap-policies/master/policy/open-api-files/f5-bigip.api.f5app.dev.json
+          workloads:
+            - '10.100.0.7'
+          monitor_uri: '/'
+    extra_nginx_controller:
+      ip: 10.0.0.43
+      password: Ch4ngeMe!
+      username: admin@acme.com
+    extra_consul:
+      agent_scheme: http
+      agent_ip: 10.100.0.60
+      agent_port: 8500
+      datacenter: demoLab
+      path_source_of_truth: agnostic_api
+      path_lookup: server_names
+    extra_cs:
+      username: admin@acme.com
+      password: Ch4ngeMe!
+      hostname: api.cloudservices.f5.com
+      api_version: v1
+
 
