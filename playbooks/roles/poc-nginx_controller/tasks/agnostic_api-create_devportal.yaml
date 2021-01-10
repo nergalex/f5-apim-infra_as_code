@@ -1,0 +1,48 @@
+- name: SET variables
+  set_fact:
+    var_env_prefix: "env_south_"
+
+- name: Retrieve the NGINX Controller auth token
+  include_role:
+    name: nginxinc.nginx_controller_generate_token
+  vars:
+    nginx_controller_fqdn: "{{extra_nginx_controller.ip}}"
+    nginx_controller_user_email: "{{extra_nginx_controller.username}}"
+    nginx_controller_user_password: "{{extra_nginx_controller.password}}"
+
+- name: Create certificate
+  include_role:
+    name: nginxinc.nginx_controller_certificate
+  vars:
+    nginx_controller_fqdn: "{{extra_nginx_controller.ip}}"
+    nginx_controller_environmentName: "{{ var_env_prefix }}{{ extra_app.environment | lower }}"
+    nginx_controller_certificate: "{{ lookup('template','agnostic_api-cert_devportal.json') }}"
+
+- name: Create gateway
+  include_role:
+    name: nginxinc.nginx_controller_gateway
+  vars:
+    nginx_controller_fqdn: "{{extra_nginx_controller.ip}}"
+    nginx_controller_environmentName: "{{ var_env_prefix }}{{ extra_app.environment | lower }}"
+    nginx_controller_gateway: "{{ lookup('template','agnostic_api-gateway_devportal.json') }}"
+
+- name: CREATE Dev Portal associated to published API
+  uri:
+    url: "https://{{ extra_nginx_controller.ip }}/api/v1/services/environments/{{ var_env_prefix }}{{ extra_app.environment | lower }}/devportals/dev_{{ extra_app.name | lower }}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "session={{ nginx_controller_auth_token }}"
+    body: "{{ lookup('template','agnostic_api-dev_portal.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201, 202
+
+- name: "Artifact for Tower Workflows. stats_hostname used by GSLB"
+  set_stats:
+    data:
+      stats_hostname:  "dev-{{extra_app.name | lower}}"
+
+
+

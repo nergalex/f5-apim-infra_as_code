@@ -1,0 +1,55 @@
+- name: SET variables
+  set_fact:
+    var_env_prefix: "env_south_"
+    var_instance_ids: []
+
+- name: Retrieve the NGINX Controller auth token
+  include_role:
+    name: nginxinc.nginx_controller_generate_token
+  vars:
+    nginx_controller_fqdn: "{{extra_nginx_controller.ip}}"
+    nginx_controller_user_email: "{{extra_nginx_controller.username}}"
+    nginx_controller_user_password: "{{extra_nginx_controller.password}}"
+
+- name: GET API Definition Version
+  uri:
+    url: "https://{{ extra_nginx_controller.ip }}/api/v1/services/api-definitions/api_{{ extra_app.name | lower }}_{{ item.name | lower}}/versions/{{ item.version | lower}}"
+    method: GET
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "session={{ nginx_controller_auth_token }}"
+    validate_certs: no
+    status_code: 200, 201
+  loop: "{{ extra_app.components }}"
+  register: output
+
+- debug:
+    var: output
+
+# ToDo - Optimize: use a nested loop with a jinja2 template. Current limitation: first component only
+- name: INIT variables
+  set_fact:
+    var_paths: []
+
+- name: SET variables
+  set_fact:
+    var_paths: "{{ var_paths + [ item.key ] }}"
+  loop: "{{ lookup('dict', output.results.0.json.currentStatus.specs.REST.paths, wantlist=True) }}"
+
+- debug:
+    var: var_paths
+
+- name: CREATE or UPDATE a Component
+  uri:
+    url: "https://{{ extra_nginx_controller.ip }}/api/v1/services/environments/{{ var_env_prefix }}{{ extra_app.environment | lower }}/apps/app_{{ extra_app.name | lower }}.{{ extra_app.domain | lower }}/components/{{ item.name | lower }}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "session={{ nginx_controller_auth_token }}"
+    body: "{{ lookup('template','agnostic_api-component.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201, 202
+  loop: "{{ extra_app.components }}"
+

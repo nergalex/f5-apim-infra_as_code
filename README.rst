@@ -165,6 +165,19 @@ REDENTIAL TYPE                                          USERNAME                
 ``Machine``                                             ``my_VM_admin_user``                            ``my_VM_admin_user_key``                        ``my_VM_admin_user_CRT``                        ``sudo``
 =====================================================   =============================================   =============================================   =============================================   =============================================
 
+Role
+***************************
+Clone roles from `NGINX Controller collection <https://github.com/nginxinc/ansible-collection-nginx_controller>`_ in `/etc/ansible/roles/`
+
+- nginxinc.nginx_controller_generate_token
+- nginxinc.nginx_controller_certificate
+- nginxinc.nginx_controller_gateway
+- nginxinc.nginx_controller_application
+- nginxinc.nginx_controller_component
+- nginxinc.nginx_controller_environment
+
+Rename generated directory of these roles as listed above
+
 Ansible role structure
 ######################
 - Deployment is based on ``workflow template``. Example: ``workflow template`` = ``wf-create_create_edge_security_inbound``
@@ -270,7 +283,8 @@ Extra variable                                  Description
 
 2) Deploy infrastructure
 ==================================================
-Deploy the infrastructure by following the repository `f5-autoscale-azure <https://github.com/nergalex/f5-autoscale-azure>`_
+- Deploy Azure network infrastructure by following the repository `f5-autoscale-azure <https://github.com/nergalex/f5-autoscale-azure>`_
+- Deploy Consul key/value store by following the repository `f5-consul-service_discovery <https://github.com/nergalex/f5-consul-service_discovery>`_
 
 3) Deploy a DevPortal instance
 ==================================================
@@ -280,10 +294,10 @@ Create and launch a workflow template ``wf-deploy_devportal_instance`` that incl
 Job template                                                    objective                                           playbook                                        activity                                        inventory                                       limit                                           credential
 =============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 ``poc-azure_create-vm-dev_portal``                              Deploy a VM attached to a public IP                 ``playbooks/poc-azure.yaml``                    ``create-vm-dev_portal``                        ``my_project``                                  ``localhost``                                   ``my_azure_credential``
-``poc-nginx_install_vm``                                        Install N+                                          ``playbooks/poc-nginx.yaml``                    ``install_vm``                                  ``localhost``                                                                                   ``cred_NGINX``
+``poc-nginx_install_vm``                                        Install N+                                          ``playbooks/poc-nginx_install_vm.yaml``                                                         ``localhost``                                                                                   ``cred_NGINX``
 ``poc-nginx_controller-login``                                  Get NGINX Controller token                          ``playbooks/poc-nginx_controller.yaml``         ``login``                                       ``localhost``
 ``poc-nginx_controller-create_location``                        Create a location = VM group on Controller          ``playbooks/poc-nginx_controller.yaml``         ``create_location``                             ``localhost``
-``poc-nginx_vm_managed_nginx``                                  Register VM on NGINX Contoller                      ``playbooks/poc-nginx.yaml``                    ``nginx_vm_managed_nginx``                      ``localhost``                                                                                   ``cred_NGINX``
+``poc-nginx_vm_managed_nginx``                                  Register VM on NGINX Contoller                      ``playbooks/poc-nginx_vm.yaml``                 ``managed_nginx``                               ``localhost``                                                                                   ``cred_NGINX``
 =============================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 
 ==============================================  =============================================
@@ -420,7 +434,7 @@ Job template                                                          objective 
 ===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 ``poc-azure_get-vmss-facts-credential_set``                           Get VMs IPs from VMSS                               ``playbooks/poc-azure.yaml``                    ``get-vmss-facts-credential_set``               ``my_project``                                  ``localhost``                                   ``my_azure_credential``
 ``poc-consul_list_json``                                              Get list of deployed Application from K/V           ``playbooks/poc-consul.yaml``                   ``list_json``                                   ``localhost``
-``poc-nginx_agnostic_api-update_nap_policies``                        Update WAF policies                                 ``playbooks/poc-nginx.yaml``                    ``nginx_vm_managed_nginx``                      ``localhost``                                                                                   ``cred_NGINX``
+``poc-nginx_agnostic_api-update_nap_policies``                        Update WAF policies                                 ``playbooks/poc-nginx_vmss.yaml``                    ``nginx_vm_managed_nginx``                      ``localhost``                                                                                   ``cred_NGINX``
 ===================================================================   =============================================       =============================================   =============================================   =============================================   =============================================   =============================================
 
 ==============================================  =============================================
@@ -627,3 +641,4 @@ Reference
 - `oAuth OpenID Connect test tool <https://oidcdebugger.com/>`_
 - `WAF policies repository <https://github.com/nergalex/f5-nap-policies>`_
 - `Swaggerhub <https://app.swaggerhub.com/>`_
+- `F5 BIG-IP auth cookie <https://clouddocs.f5.com/products/extensions/f5-declarative-onboarding/latest/authentication.html>`_

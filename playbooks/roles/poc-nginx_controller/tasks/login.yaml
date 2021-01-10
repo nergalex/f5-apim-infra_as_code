@@ -1,0 +1,36 @@
+---
+- name: Authenticate to contoller with creds to get token
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/platform/login"
+    method: POST
+    headers:
+      "Content-Type": "application/json"
+    body:
+      credentials:
+         type: "BASIC"
+         username: "{{ extra_nginx_controller_username }}"
+         password: "{{ extra_nginx_controller_password }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 204
+  register: results
+
+- name: Get controller api key for agent registration
+  uri:
+    url: "https://{{ extra_nginx_controller_ip }}/api/v1/platform/global"
+    method: GET
+    headers:
+      "Cookie": "{{ results.set_cookie }}"
+    return_content: yes
+    status_code: 200
+    validate_certs: false
+  register: var_ctrl_globals
+
+- name: "Artifact for Tower Workflows"
+  set_stats:
+    data:
+      stats_session:  "{{ results.set_cookie }}"
+      stats_api_key:  "{{var_ctrl_globals.json.currentStatus.agentSettings.apiKey}}"
+
+...

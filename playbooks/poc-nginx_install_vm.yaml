@@ -1,0 +1,63 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: CREATE ansible-playbook in-memory inventory
+    add_host:
+      groups: "tmp-group"
+      hostname: "{{ extra_vm.name }}"
+      ansible_host: "{{ extra_vm.ip }}"
+      ansible_port: 22
+
+- hosts: tmp-group
+  gather_facts: yes
+  become: true
+  collections:
+    - nginxinc.nginx_core
+  roles:
+    - role: nginx
+      vars:
+        nginx_type: plus
+        nginx_remove_license: false
+        # nginx_version: -22-1.el7.ngx
+        nginx_start: true
+        nginx_license:
+          certificate: "{{extra_nginx_licence_dir}}/nginx-repo.crt"
+          key: "{{extra_nginx_licence_dir}}/nginx-repo.key"
+        nginx_delete_license: true
+        nginx_cleanup_config: true
+        nginx_cleanup_config_path:
+          - /etc/nginx/conf.d/default.conf
+        nginx_rest_api_enable: true
+        nginx_rest_api_src: http/api.conf.j2
+        nginx_rest_api_location: /etc/nginx/conf.d/api.conf
+        nginx_rest_api_port: "{{ ansible_host }}:8080"
+        nginx_rest_api_write: true
+        nginx_rest_api_dashboard: true
+        nginx_status_rest_api_allow: 10.0.0.0/8
+        nginx_status_rest_api_deny: all
+        nginx_status_rest_api_dashboard_allow: 10.0.0.0/8
+        nginx_status_rest_api_dashboard_deny: all
+        nginx_debug_output: true
+        nginx_selinux: false
+        # nginx_selinux: true
+        # nginx_selinux_enforcing: true
+        # List of TCP ports to add to http_port_t type (80 and 443 have this type already)
+        # https://github.com/nginxinc/ansible-role-nginx/blob/main/defaults/main/selinux.yml
+        #        nginx_selinux_tcp_ports:
+        #          - 80
+        #          - 443
+        nginx_configure: false
+        nginx_logrotate_conf_enable: true
+        nginx_logrotate_conf:
+          paths:
+            - /var/log/nginx/*.log
+          options:
+            - daily
+            - missingok
+            - rotate 14
+            - compress
+            - delaycompress
+            - notifempty
+            - sharedscripts
+

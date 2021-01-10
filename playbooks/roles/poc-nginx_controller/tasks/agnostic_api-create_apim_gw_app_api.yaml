@@ -1,0 +1,138 @@
+- name: SET variables
+  set_fact:
+    var_env_prefix: "env_south_"
+    var_instance_ids: []
+
+- name: Retrieve the NGINX Controller auth token
+  include_role:
+    name: nginxinc.nginx_controller_generate_token
+  vars:
+    nginx_controller_fqdn: "{{extra_nginx_controller.ip}}"
+    nginx_controller_user_email: "{{extra_nginx_controller.username}}"
+    nginx_controller_user_password: "{{extra_nginx_controller.password}}"
+
+### Pre-requisites - Define instances from a specific location. A location is a Azure VM Scale Set
+- name: GET N+ instances ID
+  uri:
+    url: "https://{{ extra_nginx_controller.ip }}/api/v1/infrastructure/locations/{{ extra_app.gateways.location }}/instances"
+    method: GET
+    headers:
+      "Cookie": "session={{ nginx_controller_auth_token }}"
+    return_content: yes
+    validate_certs: no
+    status_code: 200
+  register: instances
+
+- name: SET var_instance_ids
+  set_fact:
+    var_instance_ids: "{{ var_instance_ids }} + [ {
+      'name': '{{ item.metadata.name }}',
+      'location': '{{ extra_app.gateways.location }}',
+      'ref': '{{ item.metadata.ref }}'
+    }]"
+  loop: "{{ instances.json['items'] }}"
+
+- name: Create the environment
+  include_role:
+    name: nginxinc.nginx_controller_environment
+  vars:
+    nginx_controller_fqdn: "{{extra_nginx_controller.ip}}"
+    nginx_controller_environment: "{{ lookup('template','agnostic_api-environment.json') }}"
+
+- name: Create certificate object
+  include_role:
+    name: nginxinc.nginx_controller_certificate
+  vars:
+    nginx_controller_fqdn: "{{extra_nginx_controller.ip}}"
+    nginx_controller_environmentName: "{{ var_env_prefix }}{{ extra_app.environment | lower }}"
+    nginx_controller_certificate: "{{ lookup('template','cert_from_survey.json') }}"
+  when: extra_app_tls_key is defined
+
+- name: Create a gateway
+  include_role:
+    name: nginxinc.nginx_controller_gateway
+  vars:
+    nginx_controller_fqdn: "{{extra_nginx_controller.ip}}"
+    nginx_controller_environmentName: "{{ var_env_prefix }}{{ extra_app.environment | lower }}"
+    nginx_controller_gateway: "{{ lookup('template','gateway_crt_from_survey.json') }}"
+
+- name: Create an application
+  include_role:
+    name: nginxinc.nginx_controller_application
+  vars:
+    nginx_controller_fqdn: "{{extra_nginx_controller.ip}}"
+    nginx_controller_environmentName: "{{ var_env_prefix }}{{ extra_app.environment | lower }}"
+    nginx_controller_app: "{{ lookup('template','application.json') }}"
+
+- name: Create an Identity Provider
+  uri:
+    url: "https://{{ extra_nginx_controller.ip }}/api/v1/security/identity-providers/idp_{{ extra_app.name | lower }}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "session={{ nginx_controller_auth_token }}"
+    body: "{{ lookup('template','agnostic_api-identity_provider.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201, 202
+
+- name: CREATE API Definition
+  uri:
+    url: "https://{{ extra_nginx_controller.ip }}/api/v1/services/api-definitions/api_{{ extra_app.name | lower }}_{{ item.name | lower}}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "session={{ nginx_controller_auth_token }}"
+    body: "{{ lookup('template','agnostic_api-api_definition.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201
+  loop: "{{ extra_app.components }}"
+
+- name: CREATE API Definition Version
+  uri:
+    url: "https://{{ extra_nginx_controller.ip }}/api/v1/services/api-definitions/api_{{ extra_app.name | lower }}_{{ item.name | lower}}/versions/{{ item.version | lower}}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "session={{ nginx_controller_auth_token }}"
+    body: "{{ lookup('template','api_definition_version.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201
+  loop: "{{ extra_app.components }}"
+
+- name: IMPORT an API Definition Version in JSON format
+  uri:
+    url: "https://{{ extra_nginx_controller.ip }}/api/v1/services/api-definitions/api_{{ extra_app.name | lower }}_{{ item.name | lower}}/versions/{{ item.version | lower}}/import"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "session={{ nginx_controller_auth_token }}"
+    body: "{{ lookup('url', item.openapi_spec_uri, split_lines='False') | from_json }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201
+  loop: "{{ extra_app.components }}"
+
+- name: CREATE a Published API version for each App's component
+  uri:
+    url: "https://{{ extra_nginx_controller.ip }}/api/v1/services/environments/{{ var_env_prefix }}{{ extra_app.environment | lower }}/apps/app_{{ extra_app.name | lower }}.{{ extra_app.domain | lower }}/published-apis/api_{{ extra_app.name | lower }}_{{ item.name | lower}}"
+    method: PUT
+    headers:
+      "Content-Type": "application/json"
+      "Cookie": "session={{ nginx_controller_auth_token }}"
+    body: "{{ lookup('template','agnostic_api-published_api.json') }}"
+    body_format: json
+    return_content: yes
+    validate_certs: no
+    status_code: 200, 201, 202
+  loop: "{{ extra_app.components }}"
+
+
+
+

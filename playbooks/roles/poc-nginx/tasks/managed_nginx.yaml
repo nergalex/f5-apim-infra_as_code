@@ -1,0 +1,46 @@
+---
+- name: INSTALL package
+  package:
+    name: policycoreutils-python
+    state: present
+
+- name: CREATE install directory
+  file:
+    path: /root/nginx-controller
+    state: directory
+
+- name: COPY files/nginx-plus-api.conf /etc/nginx/conf.d/ necessary for process monitoring.
+  copy:
+    content: "{{ lookup('url', 'https://raw.githubusercontent.com/nginxinc/ansible-role-nginx-controller-agent/master/files/nginx-plus-api.conf') }}"
+    dest: "/etc/nginx/conf.d/nginx-plus-api.conf"
+    force: yes
+
+- name: CREATE self-registerd instance on NGINX Controller
+  get_url:
+    url: "https://{{ extra_nginx_controller_ip }}:8443/{{ extra_nginx_controller_install_path }}"
+    validate_certs: no
+    dest: /root/nginx-controller/install.sh
+    mode: '0700'
+
+- name: INSTALL NGINX Controller agent
+  shell: "API_KEY='{{ stats_api_key }}' STORE_UUID=True ./install.sh  -y --insecure --instance-name {{ inventory_hostname }}  --location-name {{ extra_vmss_name | default(extra_nginx_controller_location) | lower }}"
+  args:
+    chdir: /root/nginx-controller/
+  register: result_install
+
+- name: SHOW output
+  debug:
+    var: result_install
+
+- name: Enable WAF on Controller agent
+  lineinfile:
+    path: /etc/controller-agent/agent.conf
+    firstmatch: yes
+    insertafter: "^.*extensions.*$"
+    line: "security=True"
+
+- name: Restart Controller agent
+  systemd:
+    state: restarted
+    name: controller-agent
+...

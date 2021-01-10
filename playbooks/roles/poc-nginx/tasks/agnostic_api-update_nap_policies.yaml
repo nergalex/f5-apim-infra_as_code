@@ -1,0 +1,49 @@
+---
+- name: INSTALL package
+  package:
+    name:
+      - git
+    state: present
+
+- name: CREATE NAP directoty
+  file:
+    path: "/etc/nginx/nap"
+    state: directory
+
+- name: FETCH git NAP configuration
+  git:
+    repo: '{{ extra_waf_policies_repo }}'
+    dest: "/etc/nginx/nap/"
+
+- name: app protect directives
+  set_fact:
+    var_replace_app_protect:
+      - app_protect_policy_file
+
+- name: CLEAN - comment app protect configuration set by NGINX Controller
+  replace:
+    path: /etc/nginx/nginx.conf
+    regexp: '^(\s+{{ item }}.*)$'
+    replace: '\1'
+  loop: "{{ var_replace_app_protect }}"
+
+- name: Enable WAF specific policy
+  blockinfile:
+    path: /etc/nginx/nginx.conf
+    insertafter: "server_name {{ item.key }};"
+    block: "{{ lookup('template','agnostic_api-waf_policy_ref.json') }}"
+    marker: "# {mark} Ansible - Enable specific policy for {{ item.key }}"
+  loop: "{{ stats_consul_list }}"
+
+- name: reload nginx
+  service:
+    name: nginx
+    state: reloaded
+
+
+
+
+
+
+
+...

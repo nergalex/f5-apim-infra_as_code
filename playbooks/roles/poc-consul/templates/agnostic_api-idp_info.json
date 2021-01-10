@@ -1,0 +1,13 @@
+{
+  "authorize_uri": "https://{{ extra_okta.organization }}.okta.com/oauth2/{{ stats_auth_server_id }}/v1/authorize",
+  "jwk_file": "https://{{ extra_okta.organization }}.okta.com/oauth2/{{ stats_auth_server_id }}/v1/keys",
+  "redirect_uri": "https://oidcdebugger.com/debug",
+  "client_id": "{{ stats_client_id }}",
+  "client_secret": "{{ stats_client_secret }}",
+  "Scope": [{% for scope in extra_okta.auth_server.scopes -%}
+      "{{ scope }}"{%- if not loop.last -%},{% endif -%}
+      {%- endfor %}],
+  "State": "France",
+  "Nonce": "{{ 1000 | random | to_uuid }}",
+  "Response type": "code + token"
+}
