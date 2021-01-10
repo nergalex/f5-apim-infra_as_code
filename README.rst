@@ -65,13 +65,13 @@ Product
 Products used for this demo:
 
 - **DNS** -- `F5 Cloud Services <https://simulator.f5.com/>`_
-- **DevPortal** -- unlimited instances managed by `NGINX Controller + add-on API Management module <https://docs.nginx.com/nginx-controller/services/api-management/manage-dev-portals/>`_
+- **DevPortal** -- unlimited NGINX+ (R23) instances managed by `NGINX Controller + add-on API Management module <https://docs.nginx.com/nginx-controller/services/api-management/manage-dev-portals/>`_
 - **Consumer** -- `Postman <https://www.postman.com/>`_
 - **IdP** -- `Okta <https://www.okta.com/developer/signup>`_
-- **WAF**: unlimited instances NGINX R22 + App Protect 2.1.1 managed by `NGINX Controller + add-on Application Security module <https://www.nginx.com/blog/introducing-nginx-controller-app-security-for-delivery>`_
-- **API GW**: unlimited instances NGINX R22 + App Protect 2.1.1 managed by `NGINX Controller + add-on API Management module <https://www.nginx.com/resources/datasheets/nginx-controller-api-management/>`_
+- **WAF**: unlimited NGINX+ (R22) instances + App Protect (2.1.1) managed by `NGINX Controller + add-on Application Security module <https://www.nginx.com/blog/introducing-nginx-controller-app-security-for-delivery>`_
+- **API GW**: unlimited NGINX+ (R23) instances managed by `NGINX Controller + add-on API Management module <https://www.nginx.com/resources/datasheets/nginx-controller-api-management/>`_
 - **Repository**: GitHub
-- **Controller** -- `NGINX Controller 3.12 <https://www.nginx.com/products/nginx-controller/>`_
+- **Controller** -- `NGINX Controller (3.12) <https://www.nginx.com/products/nginx-controller/>`_
 - **Key/value store**: `Consul <https://www.consul.io/>`_
 - **Automation tool**: `Ansible Tower <https://www.ansible.com/products/tower>`_
 - **infrastructure | Virtual Appliance** -- `F5 BIG-IP <https://clouddocs.f5.com/>`_
