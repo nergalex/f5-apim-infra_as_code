@@ -1,0 +1,556 @@
+{
+	"info": {
+		"_postman_id": "4f59ca6d-467e-46c0-ade6-84d6de0978fb",
+		"name": "POC - agnostic API",
+		"description": "DOWNLOAD AS3\r\n\thttps://github.com/F5Networks/f5-appsvcs-extension/releases\r\n\r\nINSTALL AS3\r\n\t$ curl -kvu admin:MyPassword \"https://<BIG-IP_management_IP>:<BIG-IP_management_port>/mgmt/shared/iapp/package-management-tasks\" -H \"Origin: https://<BIG-IP_management_IP>\" -H \"Content-Type: application/json;charset=UTF-8\" --data  '{\"operation\":\"INSTALL\",\"packageFilePath\":\"/var/config/rest/downloads/f5-appsvcs-<AS3_version>.noarch.rpm\"}'\r\n\t\r\n\t$ curl -sku admin:MyPassword https://<BIG-IP_management_IP>:<BIG-IP_management_port>/mgmt/shared/appsvcs/info\r\n\r\nCHECK UPLOAD\r\n\t$ ll /var/config/rest/downloads/",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. CREATE App API via AS3",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-F5-Auth-Token",
+						"type": "text",
+						"value": "{{auth_token}}",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"class\": \"AS3\",\n    \"action\": \"deploy\",\n    \"persist\": true,\n    \"declaration\": {\n        \"class\": \"ADC\",\n        \"schemaVersion\": \"3.12.0\",\n        \"{{tenant_name}}\": {\n            \"class\": \"Tenant\",\n             \"{{app_name}}\": {\n                \"class\": \"Application\",\n                \"template\": \"generic\",\n                \"vs-{{app_name}}\": {\n                    \"class\": \"Service_HTTP\",\n                    \"virtualPort\": 80,\n                    \"virtualAddresses\": [\n                        \"{{app_vip_listener}}\"\n                    ],\n                    \"policyWAF\": {\n                        \"use\": \"waf_policy-{{app_name}}\"\n                    },\n                    \"pool\": \"pool_{{app_name}}\"\n                },\n                \"pool_{{app_name}}\": {\n                    \"class\": \"Pool\",\n                    \"monitors\": [\"tcp\"],\n                    \"members\": [\n                        {\n                            \"servicePort\": 80,\n                            \"serverAddresses\": [\"{{app_pool_member}}\"],\n                            \"updateInterval\": 10\n                        }\n                    ]\n                },\n                \"waf_policy-{{app_name}}\": {\n                    \"class\": \"WAF_Policy\",\n                    \"url\": \"https://raw.githubusercontent.com/nergalex/PublicCloudBuilder/master/template/F5/asm_api_policy_empty.xml\",\n                    \"ignoreChanges\": true\n                }\n            }\n        }\n    }\n}"
+				},
+				"url": {
+					"raw": "{{gw_waf_uri}}/v1/mgmt/shared/appsvcs/declare",
+					"host": [
+						"{{gw_waf_uri}}"
+					],
+					"path": [
+						"v1",
+						"mgmt",
+						"shared",
+						"appsvcs",
+						"declare"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2.GET_last_AS3_declaration",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-F5-Auth-Token",
+						"type": "text",
+						"value": "{{auth_token}}",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{gw_waf_uri}}/v1/mgmt/shared/appsvcs/declare",
+					"host": [
+						"{{gw_waf_uri}}"
+					],
+					"path": [
+						"v1",
+						"mgmt",
+						"shared",
+						"appsvcs",
+						"declare"
+					]
+				},
+				"description": "example-clone-pools"
+			},
+			"response": []
+		},
+		{
+			"name": "3. GET policyID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"",
+							"pm.environment.set(\"waf_policy_id\", jsonData.items[0].id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"disabled": true
+					},
+					{
+						"key": "X-F5-Auth-Token",
+						"type": "text",
+						"value": "{{auth_token}}",
+						"disabled": true
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{gw_waf_uri}}/v1/mgmt/tm/asm/policies?$filter=fullPath eq /{{tenant_name}}/{{app_name}}/waf_policy-{{app_name}}",
+					"host": [
+						"{{gw_waf_uri}}"
+					],
+					"path": [
+						"v1",
+						"mgmt",
+						"tm",
+						"asm",
+						"policies"
+					],
+					"query": [
+						{
+							"key": "$filter",
+							"value": "fullPath eq /{{tenant_name}}/{{app_name}}/waf_policy-{{app_name}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. UPLOAD OpenAPI spec file",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/octet-stream",
+						"type": "text"
+					},
+					{
+						"key": "Content-range",
+						"value": "0-10372/10373",
+						"type": "text"
+					},
+					{
+						"key": "X-F5-Auth-Token",
+						"type": "text",
+						"value": "{{auth_token}}",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"openapi\": \"3.0.0\",\r\n  \"info\": {\r\n    \"title\": \"F5 BIG-IP API consumed by external App\",\r\n    \"description\": \"Allowed API Flow to consume your F5 BIG-IP API\",\r\n    \"contact\": {\r\n      \"email\": \"al.dacosta@f5.com\"\r\n    },\r\n    \"version\": \"1.0.0\"\r\n  },\r\n  \"servers\": [\r\n    {\r\n      \"url\": \"https://f5-bigip-api.f5app.dev/v1\"\r\n    }\r\n  ],\r\n  \"tags\": [\r\n    {\r\n      \"name\": \"waf_update_swagger\",\r\n      \"description\": \"Update WAF policy using your latest App's spec (swagger file)\"\r\n    }\r\n  ],\r\n  \"paths\": {\r\n    \"/mgmt/tm/asm/policies\": {\r\n      \"get\": {\r\n        \"tags\": [\r\n          \"waf_update_swagger\"\r\n        ],\r\n        \"summary\": \"Task 1. GET Policy ID\",\r\n        \"description\": \"GET policy ID in response key: items.0.id, noted as var_waf_policy_id is further tasks\",\r\n        \"parameters\": [\r\n          {\r\n            \"name\": \"$filter\",\r\n            \"in\": \"query\",\r\n            \"description\": \"search filter apllied on your policy named extra_uri_full_path. Always starts with fullPath%20eq%20 followed by your policy name. Example: fullPath%20eq%20extra_uri_full_path\",\r\n            \"required\": true,\r\n            \"style\": \"form\",\r\n            \"explode\": true,\r\n            \"schema\": {\r\n              \"type\": \"array\",\r\n              \"items\": {\r\n                \"type\": \"string\"\r\n              }\r\n            }\r\n          }\r\n        ],\r\n        \"responses\": {\r\n          \"200\": {\r\n            \"description\": \"OK\"\r\n          }\r\n        },\r\n        \"security\": [\r\n          {\r\n            \"application\": [\r\n              \"write:bigip\"\r\n            ]\r\n          }\r\n        ]\r\n      }\r\n    },\r\n    \"/mgmt/tm/asm/file-transfer/uploads/{policyFileName}\": {\r\n      \"post\": {\r\n        \"tags\": [\r\n          \"waf_update_swagger\"\r\n        ],\r\n        \"summary\": \"Task 2. UPLOAD openAPI spec file (swagger)\",\r\n        \"description\": \"PUSH openAPI spec file of your application to be protect by F5 WAF. Allowed format: YAML or JSON. Located remotly in bigip directory /var/ts/var/rest/\",\r\n        \"parameters\": [\r\n          {\r\n            \"name\": \"policyFileName\",\r\n            \"in\": \"path\",\r\n            \"description\": \"openAPI spec file name\",\r\n            \"required\": true,\r\n            \"style\": \"simple\",\r\n            \"explode\": false,\r\n            \"schema\": {\r\n              \"type\": \"string\"\r\n            }\r\n          },\r\n          {\r\n            \"name\": \"Content-range\",\r\n            \"in\": \"header\",\r\n            \"description\": \"Specify the range 0-{{var_content_range}}/{{var_content_length}}\",\r\n            \"required\": true,\r\n            \"style\": \"simple\",\r\n            \"explode\": false,\r\n            \"schema\": {\r\n              \"type\": \"string\"\r\n            }\r\n          },\r\n          {\r\n            \"name\": \"Content-length\",\r\n            \"in\": \"header\",\r\n            \"description\": \"Specify the length {{var_content_length}}\",\r\n            \"required\": true,\r\n            \"style\": \"simple\",\r\n            \"explode\": false,\r\n            \"schema\": {\r\n              \"type\": \"string\"\r\n            }\r\n          },\r\n          {\r\n            \"name\": \"Cache-Control\",\r\n            \"in\": \"header\",\r\n            \"description\": \"disable cache\",\r\n            \"required\": true,\r\n            \"style\": \"simple\",\r\n            \"explode\": false,\r\n            \"schema\": {\r\n              \"type\": \"string\",\r\n              \"default\": \"no-cache\",\r\n              \"enum\": [\r\n                \"no-cache\"\r\n              ]\r\n            }\r\n          },\r\n          {\r\n            \"name\": \"Accept-Encoding\",\r\n            \"in\": \"header\",\r\n            \"description\": \"negociate encoding\",\r\n            \"required\": true,\r\n            \"style\": \"simple\",\r\n            \"explode\": false,\r\n            \"schema\": {\r\n              \"type\": \"string\",\r\n              \"default\": \"gzip, deflate, br\",\r\n              \"enum\": [\r\n                \"gzip, deflate, br\"\r\n              ]\r\n            }\r\n          },\r\n          {\r\n            \"name\": \"Connection\",\r\n            \"in\": \"header\",\r\n            \"description\": \"force keep-alive\",\r\n            \"required\": true,\r\n            \"style\": \"simple\",\r\n            \"explode\": false,\r\n            \"schema\": {\r\n              \"type\": \"string\",\r\n              \"default\": \"keep-alive\",\r\n              \"enum\": [\r\n                \"keep-alive\"\r\n              ]\r\n            }\r\n          }\r\n        ],\r\n        \"requestBody\": {\r\n          \"$ref\": \"#/components/requestBodies/upload_swagger\"\r\n        },\r\n        \"responses\": {\r\n          \"200\": {\r\n            \"description\": \"OK\"\r\n          }\r\n        },\r\n        \"security\": [\r\n          {\r\n            \"application\": [\r\n              \"write:bigip\"\r\n            ]\r\n          }\r\n        ]\r\n      }\r\n    },\r\n    \"/mgmt/tm/asm/tasks/import-open-api/\": {\r\n      \"post\": {\r\n        \"tags\": [\r\n          \"waf_update_swagger\"\r\n        ],\r\n        \"summary\": \"Task 3. IMPORT openAPI spec file (swagger)\",\r\n        \"description\": \"Notify bigip system that a new policy is available to be imported. A task ID is returned in key .id.\",\r\n        \"requestBody\": {\r\n          \"$ref\": \"#/components/requestBodies/import_swagger\"\r\n        },\r\n        \"responses\": {\r\n          \"201\": {\r\n            \"description\": \"processing\"\r\n          }\r\n        },\r\n        \"security\": [\r\n          {\r\n            \"application\": [\r\n              \"write:bigip\"\r\n            ]\r\n          }\r\n        ]\r\n      }\r\n    },\r\n    \"/mgmt/tm/asm/tasks/import-open-api/{taskID}\": {\r\n      \"get\": {\r\n        \"tags\": [\r\n          \"waf_update_swagger\"\r\n        ],\r\n        \"summary\": \"Task 4. GET import task status\",\r\n        \"description\": \"GET import task status using task ID returned in previous task\",\r\n        \"parameters\": [\r\n          {\r\n            \"name\": \"taskID\",\r\n            \"in\": \"path\",\r\n            \"description\": \"use task ID returned in previous task\",\r\n            \"required\": true,\r\n            \"style\": \"simple\",\r\n            \"explode\": false,\r\n            \"schema\": {\r\n              \"type\": \"string\"\r\n            }\r\n          }\r\n        ],\r\n        \"responses\": {\r\n          \"200\": {\r\n            \"description\": \"OK\"\r\n          },\r\n          \"201\": {\r\n            \"description\": \"processing\"\r\n          }\r\n        },\r\n        \"security\": [\r\n          {\r\n            \"application\": [\r\n              \"write:bigip\"\r\n            ]\r\n          }\r\n        ]\r\n      }\r\n    },\r\n    \"/mgmt/tm/asm/tasks/apply-policy\": {\r\n      \"post\": {\r\n        \"tags\": [\r\n          \"waf_update_swagger\"\r\n        ],\r\n        \"summary\": \"Task 5. APPLY WAF Policy\",\r\n        \"description\": \"APPLY WAF Policy\",\r\n        \"requestBody\": {\r\n          \"$ref\": \"#/components/requestBodies/apply_waf_policy\"\r\n        },\r\n        \"responses\": {\r\n          \"201\": {\r\n            \"description\": \"processing\"\r\n          }\r\n        },\r\n        \"security\": [\r\n          {\r\n            \"application\": [\r\n              \"write:bigip\"\r\n            ]\r\n          }\r\n        ]\r\n      }\r\n    },\r\n    \"/mgmt/shared/appsvcs/declare\": {\r\n      \"post\": {\r\n        \"tags\": [\r\n          \"as3\"\r\n        ],\r\n        \"summary\": \"Task 0. Create App\",\r\n        \"description\": \"Create an application service\",\r\n        \"requestBody\": {\r\n          \"$ref\": \"#/components/requestBodies/as3\"\r\n        },\r\n        \"responses\": {\r\n          \"200\": {\r\n            \"description\": \"OK\"\r\n          },\r\n          \"201\": {\r\n            \"description\": \"processing\"\r\n          }\r\n        },\r\n        \"security\": [\r\n          {\r\n            \"application\": [\r\n              \"write:bigip\"\r\n            ]\r\n          }\r\n        ]\r\n      }\r\n    }\r\n  },\r\n  \"components\": {\r\n    \"schemas\": {\r\n      \"import_swagger\": {\r\n        \"required\": [\r\n          \"filename\",\r\n          \"policyReference\"\r\n        ],\r\n        \"type\": \"object\",\r\n        \"properties\": {\r\n          \"policyReference\": {\r\n            \"$ref\": \"#/components/schemas/policyReference\"\r\n          },\r\n          \"filename\": {\r\n            \"type\": \"string\",\r\n            \"description\": \"specify which WAF policy file to import. Use policy file name pushed in task 2.\",\r\n            \"example\": \"policy.json\"\r\n          }\r\n        }\r\n      },\r\n      \"apply_waf_policy\": {\r\n        \"required\": [\r\n          \"policyReference\"\r\n        ],\r\n        \"type\": \"object\",\r\n        \"properties\": {\r\n          \"policyReference\": {\r\n            \"$ref\": \"#/components/schemas/policyReference\"\r\n          },\r\n          \"filename\": {\r\n            \"type\": \"string\",\r\n            \"description\": \"specify which WAF policy ID to apply\",\r\n            \"example\": \"policy.json\"\r\n          }\r\n        }\r\n      },\r\n      \"policyReference\": {\r\n        \"required\": [\r\n          \"link\"\r\n        ],\r\n        \"type\": \"object\",\r\n        \"properties\": {\r\n          \"link\": {\r\n            \"type\": \"string\",\r\n            \"description\": \"specify targeted WAF policy. Use policy ID get in task 1, notes as var_waf_policy_id in the example.\",\r\n            \"example\": \"https://localhost/mgmt/tm/asm/policies/{{var_waf_policy_id}}\"\r\n          }\r\n        }\r\n      }\r\n    },\r\n    \"requestBodies\": {\r\n      \"upload_swagger\": {\r\n        \"description\": \"upload WAF policy in octet-stream\",\r\n        \"content\": {\r\n          \"application/octet-stream\": {}\r\n        },\r\n        \"required\": true\r\n      },\r\n      \"import_swagger\": {\r\n        \"description\": \"import WAF policy\",\r\n        \"content\": {\r\n          \"application/json\": {\r\n            \"schema\": {\r\n              \"$ref\": \"#/components/schemas/import_swagger\"\r\n            }\r\n          }\r\n        },\r\n        \"required\": true\r\n      },\r\n      \"apply_waf_policy\": {\r\n        \"description\": \"apply WAF policy\",\r\n        \"content\": {\r\n          \"application/json\": {\r\n            \"schema\": {\r\n              \"$ref\": \"#/components/schemas/apply_waf_policy\"\r\n            }\r\n          }\r\n        },\r\n        \"required\": true\r\n      },\r\n      \"as3\": {\r\n        \"description\": \"as3\",\r\n        \"content\": {\r\n          \"application/json\": {\r\n            \"schema\": {}\r\n          }\r\n        },\r\n        \"required\": true\r\n      }\r\n    },\r\n    \"securitySchemes\": {\r\n      \"application\": {\r\n        \"type\": \"oauth2\",\r\n        \"flows\": {\r\n          \"clientCredentials\": {\r\n            \"tokenUrl\": \"https://dev-431905.okta.com/oauth2/aus1no12rybPt7k7a4x7/v1/authorize\",\r\n            \"scopes\": {\r\n              \"read:bigip\": \"allows reading resources\",\r\n              \"write:bigip\": \"allows modifying resources\"\r\n            }\r\n          }\r\n        }\r\n      }\r\n    }\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{gw_waf_uri}}/v1/mgmt/tm/asm/file-transfer/uploads/{{app_name}}_openapi_spec_file.yaml",
+					"host": [
+						"{{gw_waf_uri}}"
+					],
+					"path": [
+						"v1",
+						"mgmt",
+						"tm",
+						"asm",
+						"file-transfer",
+						"uploads",
+						"{{app_name}}_openapi_spec_file.yaml"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. IMPORT OpenAPI spec file",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"",
+							"pm.environment.set(\"import_open_api_id\", jsonData.id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-F5-Auth-Token",
+						"type": "text",
+						"value": "{{auth_token}}",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"filename\": \"{{app_name}}_openapi_spec_file.yaml\",\n    \"policyReference\": {\n        \"link\": \"https://localhost/mgmt/tm/asm/policies/{{waf_policy_id}}\"\n    }\n}"
+				},
+				"url": {
+					"raw": "{{gw_waf_uri}}/v1/mgmt/tm/asm/tasks/import-open-api/",
+					"host": [
+						"{{gw_waf_uri}}"
+					],
+					"path": [
+						"v1",
+						"mgmt",
+						"tm",
+						"asm",
+						"tasks",
+						"import-open-api",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "6. CHECK import task",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-F5-Auth-Token",
+						"type": "text",
+						"value": "{{auth_token}}",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"filename\": \"{{app_name}}_openapi_spec_file.yaml\",\n    \"policyReference\": {\n        \"link\": \"https://localhost/mgmt/tm/asm/policies/{{waf_policy_id}}\"\n    }\n}"
+				},
+				"url": {
+					"raw": "{{gw_waf_uri}}/v1/mgmt/tm/asm/tasks/import-open-api/{{import_open_api_id}}",
+					"host": [
+						"{{gw_waf_uri}}"
+					],
+					"path": [
+						"v1",
+						"mgmt",
+						"tm",
+						"asm",
+						"tasks",
+						"import-open-api",
+						"{{import_open_api_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "7. APPLY WAF policy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-F5-Auth-Token",
+						"type": "text",
+						"value": "{{auth_token}}",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"policyReference\": {\n        \"link\": \"https://localhost/mgmt/tm/asm/policies/{{waf_policy_id}}\"\n    }\n}"
+				},
+				"url": {
+					"raw": "{{gw_waf_uri}}/v1/mgmt/tm/asm/tasks/apply-policy",
+					"host": [
+						"{{gw_waf_uri}}"
+					],
+					"path": [
+						"v1",
+						"mgmt",
+						"tm",
+						"asm",
+						"tasks",
+						"apply-policy"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "8. DELETE App API via AS3",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-F5-Auth-Token",
+						"type": "text",
+						"value": "{{auth_token}}",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"class\": \"AS3\",\n    \"action\": \"deploy\",\n    \"persist\": true,\n    \"declaration\": {\n        \"class\": \"ADC\",\n        \"schemaVersion\": \"3.12.0\",\n        \"{{tenant_name}}\": {\n            \"class\": \"Tenant\"\n        }\n    }\n}"
+				},
+				"url": {
+					"raw": "{{gw_waf_uri}}/v1/mgmt/shared/appsvcs/declare",
+					"host": [
+						"{{gw_waf_uri}}"
+					],
+					"path": [
+						"v1",
+						"mgmt",
+						"shared",
+						"appsvcs",
+						"declare"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "oauth2",
+		"oauth2": [
+			{
+				"key": "client_authentication",
+				"value": "body",
+				"type": "string"
+			},
+			{
+				"key": "grant_type",
+				"value": "client_credentials",
+				"type": "string"
+			},
+			{
+				"key": "useBrowser",
+				"value": false,
+				"type": "boolean"
+			},
+			{
+				"key": "addTokenTo",
+				"value": "header",
+				"type": "string"
+			},
+			{
+				"key": "redirect_uri",
+				"value": "{{oauth_callback_url}}",
+				"type": "string"
+			},
+			{
+				"key": "authUrl",
+				"value": "{{oauth_URL}}",
+				"type": "string"
+			},
+			{
+				"key": "scope",
+				"value": "{{oauth_scope}}",
+				"type": "string"
+			},
+			{
+				"key": "clientSecret",
+				"value": "{{oauth_client_secret}}",
+				"type": "string"
+			},
+			{
+				"key": "clientId",
+				"value": "{{oauth_client_id}}",
+				"type": "string"
+			},
+			{
+				"key": "accessTokenUrl",
+				"value": "{{oauth_access_token_url}}",
+				"type": "string"
+			},
+			{
+				"key": "challengeAlgorithm",
+				"value": "S256",
+				"type": "string"
+			},
+			{
+				"key": "state",
+				"value": "state",
+				"type": "string"
+			},
+			{
+				"key": "headerPrefix",
+				"value": "Bearer ",
+				"type": "string"
+			},
+			{
+				"key": "tokenType",
+				"value": "Bearer",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "gw_waf_uri",
+			"value": ""
+		},
+		{
+			"key": "okta_client_id",
+			"value": ""
+		},
+		{
+			"key": "oauth_URL",
+			"value": ""
+		},
+		{
+			"key": "oauth_client_id",
+			"value": ""
+		},
+		{
+			"key": "oauth_client_secret",
+			"value": ""
+		},
+		{
+			"key": "oauth_scope",
+			"value": ""
+		},
+		{
+			"key": "oauth_callback_url",
+			"value": ""
+		},
+		{
+			"key": "oauth_access_token_url",
+			"value": ""
+		},
+		{
+			"key": "tenant_name",
+			"value": ""
+		},
+		{
+			"key": "app_name",
+			"value": ""
+		},
+		{
+			"key": "app_vip_listener",
+			"value": ""
+		},
+		{
+			"key": "app_pool_member",
+			"value": ""
+		}
+	]
+}
